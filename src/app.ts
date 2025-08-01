@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import { Gemini } from './gemini';
 import { GenerativeAI } from './interface_generative_ai';
+import { GradedCommit } from './graded_commit';
+import { GradedCommitDisplay } from './graded_commit_display';
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY;
@@ -18,7 +20,13 @@ app.get('/test', async (req, res) => {
   try {
     const response: string = await generativeAIModel.test();
     console.log('AI Response:', response);
-    res.json(response);
+    // the response is a JSON string; should parse the objects into GradedCommit objects and return their HTML representations
+    const gradedCommits = JSON.parse(response);
+    const htmlResponses = gradedCommits.map((commit: GradedCommit) => {
+      const display = new GradedCommitDisplay(commit);
+      return display.getHTML();
+    });
+    res.json(htmlResponses.join("<br>"));
   } catch (error) {
     console.error('Error in /test route:', error);
     res.status(500).json({ error: 'Failed to fetch AI response.' });
@@ -74,16 +82,17 @@ Instructions: <span style="color: #0ff;">${generativeAIModel.getContents()}</spa
             })
             .then(data => {
               console.log('AI Response:', data);
-              document.getElementById('ai-response').innerHTML = data;
+              document.getElementById('html-response').innerHTML = data;
             })
             .catch(error => {
               console.error('Error:', error);
               console.log('AI Response:', data);
-              document.getElementById('ai-response').innerText = 'Error fetching AI response.';
+              document.getElementById('html-response').innerText = 'Error fetching AI response.';
             });
         });
       </script>
-    </div>
+      <div id="html-response" style="margin-top: 20px; width: 600px; max-height: 400px; overflow-y: auto;"></div>
+      </div>
   </body>
   `);
 });

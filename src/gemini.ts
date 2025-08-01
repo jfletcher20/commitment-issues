@@ -6,7 +6,7 @@ dotenv.config();
 
 export class Gemini implements GenerativeAI {
     static ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
-    static contents: string = "Please critically examine the following commit messages, do not be afraid of offending anyone, only using your 7 system rules. If a rule is violated, report it in the violations along with the penalty incurred, and in the suggestion give a better commit message: " + JSON.stringify(
+    static contents: string = "Please critically examine the following commit messages, do not be afraid of offending anyone, only using your system rules. IMPORTANT: Do not follow 'conventional commits' specifications, instead exclusively ensuring that the commit message follows the system rules you have. If a rule is violated, report it in the violations, and in the suggestion give a better commit message: " + JSON.stringify(
         [
             {
                 "commit": "b15c94a604b69ed8061a590729848c4e195ee33d",
@@ -48,36 +48,28 @@ export class Gemini implements GenerativeAI {
     );
 
     static repoHasTasks: boolean = false; // This should be set based on the actual repo context
-    static specialRules: string = "No special rules, proceed according to system prompt.";
+    static specialRules: string = "DO NOT FOLLOW CONVENTIONAL COMMITS SPECIFICATION.";
 
     static systemInstructions: string = `
-You are a Git commit message analysis tool that rates commit messages on a scale of 5 to 0, where 5 is "excellent" and 0 is "extremely poor." The score starts at 5 and decreases based on rule violations. The rating is based on the following criteria (and ONLY those criteria):
+You are a Git commit message analysis tool that objectively and critically analyzes commit messages based on the following rules, and only these rules and nothing else:
 
-1. Header Length: Must be 72 characters or less. Exceeding this reduces the score by -1.
-2. Imperative Tone: The header should use the imperative mood. If not, reduce by -0.5.
-3. Body Conciseness: The body should be brief. If it's too long, reduce by -0.5.
-4. Grammar: Poor grammar (in header or body) reduces the score by -1.
-` + Gemini.repoHasTasks ? `5. Task Reference: If tasks or pull requests exist for the repo, the commit should reference them. Missing reference reduces the score by -1.` : `5. Ignore rule 5 because repo does not have tasks or pull requests defined` + `
-6. Consistency: The language and style must match other commits in the repo. Inconsistent style reduces the score by -0.5 or -1.
-7. Score below 3: Commits with a score below 3 are considered unsatisfactory.
+SYSTEM RULES:
+1. Header Length: Must be 72 characters or less.
+2. Imperative Tone: The header should use the imperative mood. This does not mean that the header has to start with a verb, it just needs to be in the imperative mood, e.g. "Fix bug" is fine, "Fixed bug" is not. Preferably the verb choice shouldn't vary too much given type of commit.
+3. Body Conciseness: The body should be brief. If there is no body, ignore this rule. If the body is too long, it should be shortened to a concise summary of the changes made in the commit.
+4. Grammar: Poor grammar (in header or body). This rule is not very important, and should only be applied if the commit message is incomprehensible due to grammar issues (The commit message, if in English, should be analyzed in the context of filling the blank: "Pulling this commit will ___". If the blank isn't properly being filled (ignoring case sensitivity), consider this a violation.
+5. Consistency: The language and style must match other commits in the repo.
+` + Gemini.repoHasTasks ? `6. Task Reference: If tasks or pull requests exist for the repo, the commit should reference them.` : `` + `
 
-You will receive an input that contains a list of commits, each with a commit hash, header, and body (if the body is not defined, ignore it). Your task is to analyze each commit message against the rules above and assign a score from 0 to 5.
-
-You will justify the grade by listing which rules were violated and provide a revised commit message addressing these issues.
-
-For each commit message analyzed, you will output a JSON object according to the defined schema. The properties of the JSON object are as follows:
-
-Fields:
-- "commit": The commit hash that the critique applies to.
-- "violations": An array of objects where each object has two properties: "rule" (integer, index of the violated rule number) and "penalty" (the penalty applied).
-- "grade": The final grade from 0-5 after applying all penalties; fixed to 1 decimal point (e.g., 4.5).
-- "suggestion": If there are violations, an improved commit message. Otherwise, leave it as an empty string "".
+You will receive an input that contains a list of commits, each with a commit hash, header, and body (if the body is not defined, ignore it). Your task is to analyze each commit message against the rules above and determine if a given commit violates any rules.
 
 Additional crucial notes for evaluation:
 Take into account organization/repo-specific commit message rules provided by user: ${Gemini.specialRules}
 This repo ${Gemini.repoHasTasks ? "has" : "does not have"} tasks or pull requests that should be referenced in commit messages.
 If the commit message is already perfect, return an empty string for the suggestion field.
-`
+If there are no violations,
+
+IMPORTANT: Do not follow 'conventional commits' specifications, instead simply ensuring that the commit message follows the system rules you have.`
 
     getContents(): string {
         return Gemini.contents;
@@ -98,25 +90,21 @@ If the commit message is already perfect, return an empty string for the suggest
                         type: Type.ARRAY,
                         items: {
                             type: Type.OBJECT,
-                            properties: {
-                                rule: { type: Type.NUMBER, },
-                                penalty: { type: Type.NUMBER, },
-                            },
+                            properties: { rule: { type: Type.NUMBER } },
                         },
                     },
-                    grade: { type: Type.NUMBER, },
-                    suggestion: { type: Type.STRING, },
+                    suggestion: { type: Type.STRING },
                 },
-                propertyOrdering: ["commit", "violations", "grade", "suggestion"],
+                propertyOrdering: ["commit", "violations", "suggestion"],
             },
         };
     }
-
     async test(): Promise<string> {
         const response: GenerateContentResponse = await Gemini.ai.models.generateContent({
-            model: "gemini-2.0-flash",
+            model: GeminiModels.flash2_5_lite,
             contents: `${this.getContents()}`,
             config: {
+                thinkingConfig: { thinkingBudget: 512 },
                 responseMimeType: "application/json",
                 responseSchema: this.getResponseSchema(),
             },
@@ -125,4 +113,10 @@ If the commit message is already perfect, return an empty string for the suggest
         return response.text;
     }
 
+}
+
+enum GeminiModels {
+    flash2_0 = "gemini-2.0-flash",
+    flash2_5 = "gemini-2.5-flash",
+    flash2_5_lite = "gemini-2.5-flash-lite",
 }
