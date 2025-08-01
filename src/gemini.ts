@@ -1,11 +1,12 @@
-import { GenerateContentResponse, GoogleGenAI } from "@google/genai";
+import { GenerateContentResponse, GoogleGenAI, Type } from "@google/genai";
 import { GenerativeAI } from "./interface_generative_ai";
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 export class Gemini implements GenerativeAI {
     static ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
-    static instructions: string = "Return pure json that contains a list of 5 random numbers between 1 and 100, in format: [1, 2, 3, 4, 5] and then a list of 5 random strings, also in an array, do not include any other text. This way I can parse your answer for my app. Do not include markdown information like ```json`. The strings returned need not be tided to the letteres specified.";
+    static instructions: string = "Generate a list of 5 random numbers between 1 and 100, into the JSON response format specified in the schema. 'numbers' contains the array of numbers, while 'names' contains an array of the names of those numbers, in the same order.";
 
     getInstructions(): string {
         return Gemini.instructions;
@@ -15,6 +16,27 @@ export class Gemini implements GenerativeAI {
         const response: GenerateContentResponse = await Gemini.ai.models.generateContent({
             model: "gemini-2.0-flash",
             contents: `${this.getInstructions()}`,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        numbers: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.NUMBER,
+                            },
+                        },
+                        names: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.STRING,
+                            },
+                        },
+                    },
+                    propertyOrdering: ["numbers", "names"],
+                },
+            },
         });
         console.log(response.text);
         // all responses invariably are in the format ```json{jsoncontent}``` so we have to extract the jsoncontent
