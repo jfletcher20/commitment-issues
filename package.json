@@ -1,0 +1,11 @@
+{
+  "name": "hr.foi.commitment_issues_demo",
+  "version": "1.0.0",
+  "description": "Commitment issues demo project to test different technologies.",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC"
+}
