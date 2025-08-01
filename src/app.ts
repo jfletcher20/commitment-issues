@@ -38,7 +38,7 @@ app.get('/', (req, res) => {
       <div style="position: relative; display: inline-block;">
 
 <pre style="overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; width: 600px; height: 200px; margin-top: 20px; padding: 10px; font-family: Consolas, monospace; background-color: #333; color: #ddd; border: none; border-radius: 5px;" id="ai-response">
-Instructions: <span style="color: #0ff;">${generativeAIModel.getInstructions()}</span></pre>
+Instructions: <span style="color: #0ff;">${generativeAIModel.getContents()}</span></pre>
 
         <form action="/test" method="post" style="position: absolute; left: 40%; right: 40%; bottom: -15px; margin: 0;">
            <style>
