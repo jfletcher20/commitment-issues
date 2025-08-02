@@ -1,9 +1,5 @@
 import axios from "axios";
 
-/**
- * Extracts owner and repo from a GitHub repo URL.
- * Example: https://github.com/user/repo -> { owner: "user", repo: "repo" }
- */
 function parseRepoUrl(repoUrl: string) {
   const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?/);
   if (!match) {
@@ -12,9 +8,6 @@ function parseRepoUrl(repoUrl: string) {
   return { owner: match[1], repo: match[2] };
 }
 
-/**
- * Fetch commit messages from a GitHub repository.
- */
 export async function fetchCommitMessages(
   repoUrl: string,
   githubToken: string
