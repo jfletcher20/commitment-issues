@@ -1,12 +1,16 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import { Gemini } from './gemini';
-import { GenerativeAI } from './interface_generative_ai';
-import { GradedCommit } from './graded_commit';
-import { GradedCommitDisplay } from './graded_commit_display';
+import express from "express";
+import dotenv from "dotenv";
+import { Gemini } from "./gemini";
+import { GenerativeAI } from "./interface_generative_ai";
+import { GradedCommit } from "./graded_commit";
+import { GradedCommitDisplay } from "./graded_commit_display";
+import { fetchCommitMessages } from "./github_api";
+import { analyzeCommitsFromRepo } from "./commit_analysis";
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY;
+const githubToken = process.env.GITHUB_TOKEN;
+
 const app = express();
 const port = 3066;
 const fulladdress = `http://localhost:${port}`;
@@ -16,10 +20,10 @@ app.listen(port, () => {
   return console.log(`Express is listening at http://localhost:${port}`);
 });
 
-app.get('/test', async (req, res) => {
+app.get("/test", async (req, res) => {
   try {
     const response: string = await generativeAIModel.test();
-    console.log('AI Response:', response);
+    console.log("AI Response:", response);
     // the response is a JSON string; should parse the objects into GradedCommit objects and return their HTML representations
     const gradedCommits = JSON.parse(response);
     const htmlResponses = gradedCommits.map((commit: GradedCommit) => {
@@ -28,15 +32,15 @@ app.get('/test', async (req, res) => {
     });
     res.json(htmlResponses.join("<br>"));
   } catch (error) {
-    console.error('Error in /test route:', error);
-    res.status(500).json({ error: 'Failed to fetch AI response.' });
+    console.error("Error in /test route:", error);
+    res.status(500).json({ error: "Failed to fetch AI response." });
   }
 });
 
-app.use('/images', express.static('images'));
+app.use("/images", express.static("images"));
 
 // default testing route
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.send(`
   <body style="background-color:#222; color:white; font-family: sans-serif;">
     <div style="display: flex; justify-content: center; align-items: center; height: 90vh; flex-direction: column;">
@@ -95,4 +99,48 @@ Instructions: <span style="color: #0ff;">${generativeAIModel.getContents()}</spa
       </div>
   </body>
   `);
+});
+
+app.get("/fetch-commits", async (req, res) => {
+  const repoUrl = req.query.repoUrl as string;
+
+  if (!repoUrl) {
+    return res.status(400).json({ error: "Missing repoUrl parameter" });
+  }
+  if (!githubToken) {
+    return res
+      .status(500)
+      .json({ error: "GitHub token not set in environment variables" });
+  }
+
+  try {
+    const commitMessages = await fetchCommitMessages(repoUrl, githubToken);
+    res.json({ commits: commitMessages });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/analyze-commits", async (req, res) => {
+  const repoUrl = req.query.repoUrl as string;
+
+  if (!repoUrl) {
+    return res.status(400).json({ error: "Missing repoUrl parameter" });
+  }
+  if (!githubToken) {
+    return res
+      .status(500)
+      .json({ error: "GitHub token not set in environment variables" });
+  }
+
+  try {
+    const html = await analyzeCommitsFromRepo(
+      repoUrl,
+      githubToken,
+      generativeAIModel
+    );
+    res.send(html);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
