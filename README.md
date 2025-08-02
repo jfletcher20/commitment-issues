@@ -5,12 +5,16 @@ npm install
 npm test
 ```
 
-# Gemini Testing
+You can then access the basic web interface to make sure it's working properly at: http://localhost:3066/
 
-Testing out usage of Gemini API via NodeJS (using TypeScript).
+# Gemini
 
-See screenshot below for how file structure should look.
-<img width="274" height="530" alt="image" src="https://github.com/user-attachments/assets/3492eeba-528c-4ce1-afd3-1242d0f4c583" />
+Commitment Issues makes use of the Gemini API via NodeJS (using TypeScript). We do not process any of your data, but Gemini does.
+
+## Gemini API key
+Add a `.env` file with the `GOOGLE_API_KEY=` value.
+
+You can get your own free API key [from Google's AI studio](https://aistudio.google.com/app/apikey).
 
 # Fetching commit messages from any public repository
 
@@ -19,7 +23,7 @@ See screenshot below for how file structure should look.
 1. Go to [GitHub Developer Settings](https://github.com/settings/tokens) → Personal access tokens → Fine-grained tokens
 2. Click Generate new token
 3. Choose token name and leave the rest as default (Public repositories)
-4. Copy the token and put it in your .env (GITHUB_TOKEN=)
+4. Copy the token and put it in your `.env` (`GITHUB_TOKEN=`)
 
 ## Testing the endpoints
 
