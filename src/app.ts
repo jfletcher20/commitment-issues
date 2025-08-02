@@ -8,6 +8,8 @@ import { fetchCommitMessages } from "./github_api";
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY;
+const githubToken = process.env.GITHUB_TOKEN;
+
 const app = express();
 const port = 3066;
 const fulladdress = `http://localhost:${port}`;
@@ -100,28 +102,20 @@ Instructions: <span style="color: #0ff;">${generativeAIModel.getContents()}</spa
 
 app.get("/fetch-commits", async (req, res) => {
   const repoUrl = req.query.repoUrl as string;
+
   if (!repoUrl) {
-    return res.status(400).json({ error: "Missing repository URL parameter" });
+    return res.status(400).json({ error: "Missing repoUrl parameter" });
+  }
+  if (!githubToken) {
+    return res
+      .status(500)
+      .json({ error: "GitHub token not set in environment variables" });
   }
 
   try {
-    const githubToken = process.env.GITHUB_TOKEN;
-    if (!githubToken) {
-      throw new Error("GitHub token not set in environment variables");
-    }
-
     const commitMessages = await fetchCommitMessages(repoUrl, githubToken);
     res.json({ commits: commitMessages });
   } catch (error: any) {
-    if (error.response?.status === 404) {
-      console.error("GitHub API returned 404 for repo:", repoUrl);
-      res.status(404).json({
-        error:
-          "Access forbidden, check if the repository is public or if the URL is correct.",
-      });
-    } else {
-      console.error("Error fetching commits:", error.message);
-      res.status(500).json({ error: error.message });
-    }
+    res.status(500).json({ error: error.message });
   }
 });
