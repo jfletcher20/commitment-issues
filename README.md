@@ -21,6 +21,8 @@ See screenshot below for how file structure should look.
 3. Choose token name and leave the rest as default (Public repositories)
 4. Copy the token and put it in your .env (GITHUB_TOKEN=)
 
-## Testing the endpoint
+## Testing the endpoints
 
-Enter http://localhost:3066/fetch-commits?repoUrl= with the chosen public repository URL and it will display last X commit messages in JSON format (currently limited to 20 messages).
+Enter http://localhost:3066/fetch-commits?repoUrl= with the chosen public repository URL and it will display last X commit messages (hash, header, body) in JSON format (currently limited to 20 messages).
+
+Enter http://localhost:3066/analyze-commits?repoUrl= with the chosen public repository URL and it will display LLM suggestions for the last X commits.

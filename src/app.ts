@@ -5,6 +5,7 @@ import { GenerativeAI } from "./interface_generative_ai";
 import { GradedCommit } from "./graded_commit";
 import { GradedCommitDisplay } from "./graded_commit_display";
 import { fetchCommitMessages } from "./github_api";
+import { analyzeCommitsFromRepo } from "./commit_analysis";
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY;
@@ -115,6 +116,30 @@ app.get("/fetch-commits", async (req, res) => {
   try {
     const commitMessages = await fetchCommitMessages(repoUrl, githubToken);
     res.json({ commits: commitMessages });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/analyze-commits", async (req, res) => {
+  const repoUrl = req.query.repoUrl as string;
+
+  if (!repoUrl) {
+    return res.status(400).json({ error: "Missing repoUrl parameter" });
+  }
+  if (!githubToken) {
+    return res
+      .status(500)
+      .json({ error: "GitHub token not set in environment variables" });
+  }
+
+  try {
+    const html = await analyzeCommitsFromRepo(
+      repoUrl,
+      githubToken,
+      generativeAIModel
+    );
+    res.send(html);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
