@@ -109,6 +109,11 @@ Instructions: <span style="color: #0ff;">${generativeAIModel.getContents()}</spa
 
 app.get("/fetch-commits", async (req, res) => {
   const repoUrl = req.query.repoUrl as string;
+  const branch = req.query.branch as string;
+  const author = req.query.author as string;
+  const perPage = req.query.perPage
+    ? parseInt(req.query.perPage as string, 10)
+    : undefined;
 
   if (!repoUrl) {
     return res.status(400).json({ error: "Missing repoUrl parameter" });
@@ -120,7 +125,13 @@ app.get("/fetch-commits", async (req, res) => {
   }
 
   try {
-    const commitMessages = await fetchCommitMessages(repoUrl, githubToken);
+    const commitMessages = await fetchCommitMessages(
+      repoUrl,
+      githubToken,
+      branch,
+      author,
+      perPage
+    );
     res.json({ commits: commitMessages });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -129,6 +140,11 @@ app.get("/fetch-commits", async (req, res) => {
 
 app.get("/analyze-commits", async (req, res) => {
   const repoUrl = req.query.repoUrl as string;
+  const branch = req.query.branch as string | undefined;
+  const author = req.query.author as string | undefined;
+  const perPage = req.query.perPage
+    ? parseInt(req.query.perPage as string, 10)
+    : undefined;
 
   if (!repoUrl) {
     return res.status(400).json({ error: "Missing repoUrl parameter" });
@@ -143,7 +159,10 @@ app.get("/analyze-commits", async (req, res) => {
     const html = await analyzeCommitsFromRepo(
       repoUrl,
       githubToken,
-      generativeAIModel
+      generativeAIModel,
+      branch,
+      author,
+      perPage
     );
     res.send(html);
   } catch (error: any) {

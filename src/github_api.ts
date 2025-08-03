@@ -11,12 +11,15 @@ function parseRepoUrl(repoUrl: string) {
 
 export async function fetchCommitMessages(
   repoUrl: string,
-  githubToken: string
+  githubToken: string,
+  branch?: string,
+  author?: string,
+  perPage: number = 20
 ): Promise<Commit[]> {
   const { owner, repo } = parseRepoUrl(repoUrl);
 
   try {
-    // Get repo details for default branch
+    // get repo details for default branch
     const repoInfo = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}`,
       {
@@ -28,7 +31,11 @@ export async function fetchCommitMessages(
     );
     const defaultBranch = repoInfo.data.default_branch || "main";
 
-    // Get open issues/tasks
+    // filter by last X commits and by branch
+    const commitParams: any = { per_page: perPage };
+    commitParams.sha = branch || defaultBranch;
+
+    // get open issues/tasks
     const issuesRes = await axios.get(
       `https://api.github.com/repos/${owner}/${repo}/issues`,
       {
@@ -42,33 +49,47 @@ export async function fetchCommitMessages(
     const issueNumbers = issuesRes.data.map((issue: any) => issue.number);
     const repoHasOpenTasks = issueNumbers.length > 0;
 
-    // Get recent commits
     const commitsUrl = `https://api.github.com/repos/${owner}/${repo}/commits`;
     const response = await axios.get(commitsUrl, {
       headers: {
         Authorization: `token ${githubToken}`,
         Accept: "application/vnd.github.v3+json",
       },
-      params: { per_page: 20, sha: defaultBranch }, // limit & branch filter
+      params: commitParams,
     });
 
-    return response.data.map((commitObj: any) => {
-      const commitHash = commitObj.sha;
-      const fullMessage = commitObj.commit.message;
+    let commitsData = response.data;
+    if (author) {
+      const authorLower = author.toLowerCase();
+      commitsData = commitsData.filter((commitObj: any) => {
+        const commitAuthor =
+          commitObj.commit.author?.name?.toLowerCase() ||
+          commitObj.author?.login?.toLowerCase() ||
+          "";
+        return commitAuthor.includes(authorLower);
+      });
+    }
+
+    return commitsData.map((commitObj: any) => {
+      const commitHash = commitObj?.sha || "";
+      const fullMessage = commitObj?.commit?.message || "";
       const [header, ...bodyLines] = fullMessage.split("\n");
       const body = bodyLines.join("\n").trim();
       const authorName =
-        commitObj.commit.author?.name || commitObj.author?.login || "Unknown";
+        commitObj?.commit?.author?.name ||
+        commitObj?.author?.login ||
+        "Unknown";
 
-      // Find all issue/PR references as full links or number #123
+      const htmlUrl = commitObj?.html_url || "";
+
+      // find all issue/PR references
       const referencedTasks: string[] = [];
       const taskRegex =
         /#(\d+)|https:\/\/github\.com\/[^\/]+\/[^\/]+\/(issues|pull)\/(\d+)/g;
 
       let match;
       while ((match = taskRegex.exec(fullMessage)) !== null) {
-        if (match[0].startsWith("#")) {
-          // Convert #123 into full repo URL
+        if (match[1]) {
           referencedTasks.push(
             `https://github.com/${owner}/${repo}/issues/${match[1]}`
           );
@@ -77,18 +98,16 @@ export async function fetchCommitMessages(
         }
       }
 
-      let c = new Commit(
+      return new Commit(
         commitHash,
         header,
         body,
-        commitObj.html_url,
+        htmlUrl,
         authorName,
-        defaultBranch,
+        branch || defaultBranch,
         repoHasOpenTasks,
         referencedTasks
       );
-
-      return c;
     });
   } catch (error: any) {
     if (error.response?.status === 404) {

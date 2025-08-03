@@ -66,7 +66,7 @@ If any task or PR references are found without prior inclusion, **they should be
       items: {
         type: Type.OBJECT,
         properties: {
-          commit: { type: Type.STRING },
+          commitHash: { type: Type.STRING },
           violations: {
             type: Type.ARRAY,
             items: {
@@ -78,7 +78,7 @@ If any task or PR references are found without prior inclusion, **they should be
           bodySuggestion: { type: Type.STRING },
         },
         propertyOrdering: [
-          "commit",
+          "commitHash",
           "violations",
           "suggestion",
           "bodySuggestion",
