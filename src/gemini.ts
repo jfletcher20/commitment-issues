@@ -1,8 +1,8 @@
 import {
-    GenerateContentResponse,
-    GoogleGenAI,
-    SchemaUnion,
-    Type,
+  GenerateContentResponse,
+  GoogleGenAI,
+  SchemaUnion,
+  Type,
 } from "@google/genai";
 import { GenerativeAI } from "./interface_generative_ai";
 import dotenv from "dotenv";
@@ -12,16 +12,16 @@ import { DefaultData } from "./defaultdata";
 dotenv.config();
 
 export class Gemini implements GenerativeAI {
-    static ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
-    static promptPreamble: string = "Critically examine the following commit messages, do not be afraid of offending anyone, only using your system rules. IMPORTANT: You are deathly afraid of  'conventional commits' specifications and avoid them like the plague, instead exclusively ensuring that the commit message follows the system rules you already have. If a rule is violated, report it in the violations, and in the suggestion give a better commit message:";
-    static contents: string = this.promptPreamble + DefaultData.testCommits;
+  static ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
+  static promptPreamble: string =
+    "Critically examine the following commit messages, do not be afraid of offending anyone, only using your system rules. IMPORTANT: You are deathly afraid of  'conventional commits' specifications and avoid them like the plague, instead exclusively ensuring that the commit message follows the system rules you already have. If a rule is violated, report it in the violations, and in the suggestion give a better commit message:";
+  static contents: string = this.promptPreamble + DefaultData.testCommits;
 
-    static repoHasTasks: boolean = false; // This should be set based on the actual repo context
-    static specialRules: string =
-        "DO NOT FOLLOW CONVENTIONAL COMMITS SPECIFICATION OR SOMEBODY WILL PERISH.";
+  static repoHasOpenTasks: boolean = false; // This should be set based on the actual repo context
+  static specialRules: string =
+    "DO NOT FOLLOW CONVENTIONAL COMMITS SPECIFICATION OR SOMEBODY WILL PERISH.";
 
-    static systemInstructions: string =
-        `
+  static systemInstructions: string = `
 You are a Git commit message analysis tool that objectively and critically analyzes commit messages based on the following rules, and only these rules and nothing else: IMPORTANT: You are deathly afraid of  'conventional commits' specifications and avoid them like the plague, instead exclusively ensuring that the commit message follows the system rules you already have:
 SYSTEM RULES:
 1. Header Length: Must be 72 characters or less.
@@ -35,10 +35,12 @@ When constructing suggestion, DO NOT INCLUDE references to PRs or tasks if the c
 You will receive an input that contains a list of commits, each with a commit hash, header, and body (if the body is not defined, ignore it). Your task is to analyze each commit message against the rules above and determine if a given commit violates any rules.
 
 Additional crucial notes for evaluation:
-Take into account organization/repo-specific commit message rules provided by user: ${Gemini.specialRules
-            }
-This repo ${Gemini.repoHasTasks ? "has" : "does not have"
-            } tasks or pull requests that should be referenced in commit messages.
+Take into account organization/repo-specific commit message rules provided by user: ${
+    Gemini.specialRules
+  }
+This repo ${
+    Gemini.repoHasOpenTasks ? "has" : "does not have"
+  } tasks or pull requests that should be referenced in commit messages.
 If the commit message is already perfect, return an empty string for the suggestion field.
 If there are no violations,
 
@@ -50,64 +52,78 @@ If any task or PR references are found without prior inclusion, **they should be
 **This is a strict rule: If the commit message contains a body, analyze it for grammar and conciseness, and if it can be improved, provide a suggestion to make it more concise in bodySuggestion**. If the body is perfect leave the bodySuggestion empty.
 `;
 
-    getContents(): string {
-        return Gemini.contents;
-    }
+  getContents(): string {
+    return Gemini.contents;
+  }
 
-    getSystemInstructions(): string {
-        return Gemini.systemInstructions;
-    }
+  getSystemInstructions(): string {
+    return Gemini.systemInstructions;
+  }
 
-    getResponseSchema(): SchemaUnion {
-        return {
+  getResponseSchema(): SchemaUnion {
+    return {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          commit: { type: Type.STRING },
+          violations: {
             type: Type.ARRAY,
             items: {
-                type: Type.OBJECT,
-                properties: {
-                    commit: { type: Type.STRING },
-                    violations: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: { rule: { type: Type.NUMBER } },
-                        },
-                    },
-                    suggestion: { type: Type.STRING },
-                    bodySuggestion: { type: Type.STRING },
-                },
-                propertyOrdering: ["commit", "violations", "suggestion", "bodySuggestion"],
+              type: Type.OBJECT,
+              properties: { rule: { type: Type.NUMBER } },
             },
-        };
-    }
+          },
+          suggestion: { type: Type.STRING },
+          bodySuggestion: { type: Type.STRING },
+        },
+        propertyOrdering: [
+          "commit",
+          "violations",
+          "suggestion",
+          "bodySuggestion",
+        ],
+      },
+    };
+  }
 
-    async genAiResponse(prompt: string): Promise<GenerateContentResponse> {
-        return Gemini.ai.models.generateContent({
-            model: GeminiModels.flash2_5,
-            contents: prompt,
-            config: {
-                thinkingConfig: { thinkingBudget: 512 },
-                responseMimeType: "application/json",
-                responseSchema: this.getResponseSchema(),
-                systemInstruction: this.getSystemInstructions(),
-            },
-        });
-    }
+  async genAiResponse(prompt: string): Promise<GenerateContentResponse> {
+    return Gemini.ai.models.generateContent({
+      model: GeminiModels.flash2_5,
+      contents: prompt,
+      config: {
+        thinkingConfig: { thinkingBudget: 512 },
+        responseMimeType: "application/json",
+        responseSchema: this.getResponseSchema(),
+        systemInstruction: this.getSystemInstructions(),
+      },
+    });
+  }
 
-    async test(): Promise<string> {
-        const response: GenerateContentResponse = await this.genAiResponse(`${this.getContents()}`);
-        console.log(response.text);
-        return response.text;
-    }
+  async test(): Promise<string> {
+    const response: GenerateContentResponse = await this.genAiResponse(
+      `${this.getContents()}`
+    );
+    console.log(response.text);
+    return response.text;
+  }
 
-    async analyzeCommits(commits: Commit[]): Promise<string> {
-        const prompt = `${Gemini.promptPreamble} ${JSON.stringify(commits, null, 2)}`;
-        const response: GenerateContentResponse = await this.genAiResponse(prompt);
-        return response.text;
+  async analyzeCommits(commits: Commit[]): Promise<string> {
+    if (commits.length > 0) {
+      Gemini.repoHasOpenTasks = !!commits[0].repoHasOpenTasks;
     }
+    const prompt = `${Gemini.promptPreamble} ${JSON.stringify(
+      commits,
+      null,
+      2
+    )}`;
+    const response: GenerateContentResponse = await this.genAiResponse(prompt);
+    return response.text;
+  }
 }
 
 enum GeminiModels {
-    flash2_0 = "gemini-2.0-flash",
-    flash2_5 = "gemini-2.5-flash",
-    flash2_5_lite = "gemini-2.5-flash-lite",
+  flash2_0 = "gemini-2.0-flash",
+  flash2_5 = "gemini-2.5-flash",
+  flash2_5_lite = "gemini-2.5-flash-lite",
 }
