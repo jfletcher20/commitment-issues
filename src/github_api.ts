@@ -36,7 +36,7 @@ export async function fetchCommitMessages(
       const [header, ...bodyLines] = fullMessage.split("\n");
       const body = bodyLines.join("\n").trim();
 
-      return new Commit(commitHash, header, body);
+      return new Commit(commitHash, header, body, commitObj.html_url);
     });
   } catch (error: any) {
     if (error.response?.status === 404) {
@@ -44,6 +44,33 @@ export async function fetchCommitMessages(
         "Access forbidden, check if the repository is public or if the URL is correct."
       );
     }
+    throw new Error(`GitHub API error: ${error.message}`);
+  }
+}
+
+export async function fetchCommitMessage(
+  repoUrl: string,
+  commitHash: string,
+  githubToken: string
+): Promise<Commit> {
+  const { owner, repo } = parseRepoUrl(repoUrl);
+
+  try {
+    const commitUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${commitHash}`;
+
+    const response = await axios.get(commitUrl, {
+      headers: {
+        Authorization: `token ${githubToken}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    const fullMessage = response.data.commit.message;
+    const [header, ...bodyLines] = fullMessage.split("\n");
+    const body = bodyLines.join("\n").trim();
+
+    return new Commit(commitHash, header, body);
+  } catch (error: any) {
     throw new Error(`GitHub API error: ${error.message}`);
   }
 }

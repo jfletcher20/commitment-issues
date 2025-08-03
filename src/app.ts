@@ -6,6 +6,8 @@ import { GradedCommit } from "./graded_commit";
 import { GradedCommitDisplay } from "./graded_commit_display";
 import { fetchCommitMessages } from "./github_api";
 import { analyzeCommitsFromRepo } from "./commit_analysis";
+import { Commit } from "./commit";
+import { DefaultData } from "./defaultdata";
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY;
@@ -26,8 +28,10 @@ app.get("/test", async (req, res) => {
     console.log("AI Response:", response);
     // the response is a JSON string; should parse the objects into GradedCommit objects and return their HTML representations
     const gradedCommits = JSON.parse(response);
-    const htmlResponses = gradedCommits.map((commit: GradedCommit) => {
-      const display = new GradedCommitDisplay(commit);
+    const originalCommits: Commit[] = JSON.parse(DefaultData.testCommits);
+    const htmlResponses = gradedCommits.map((gradedCommit: GradedCommit) => {
+      const originalCommit = originalCommits.find(c => c.commit == gradedCommit.commit);
+      const display = new GradedCommitDisplay(originalCommit, gradedCommit);
       return display.getHTML();
     });
     res.json(htmlResponses.join("<br>"));
