@@ -1,4 +1,3 @@
-// commit_analysis.ts
 import { fetchCommitMessages } from "./github_api";
 import { GenerativeAI } from "./interface_generative_ai";
 import { GradedCommit } from "./graded_commit";
@@ -15,10 +14,6 @@ export async function analyzeCommitsFromRepo(
   const response: string = await generativeAIModel.analyzeCommits(commits);
 
   const gradedCommits: GradedCommit[] = JSON.parse(response);
-  // const htmlResponses = gradedCommits.map((commit) => {
-  //   const display = new GradedCommitDisplay(commit);
-  //   return display.getHTML();
-  // });
 
   const htmlResponses = gradedCommits.map((gradedCommit: GradedCommit) => {
     const originalCommit = commits.find((c) => c.commit == gradedCommit.commit);
