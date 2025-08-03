@@ -12,7 +12,6 @@ export async function analyzeCommitsFromRepo(
 ): Promise<string> {
   const commits: Commit[] = await fetchCommitMessages(repoUrl, githubToken);
 
-  // @ts-ignore - generativeAIModel has analyzeCommits
   const response: string = await generativeAIModel.analyzeCommits(commits);
 
   const gradedCommits: GradedCommit[] = JSON.parse(response);
@@ -22,7 +21,7 @@ export async function analyzeCommitsFromRepo(
   // });
 
   const htmlResponses = gradedCommits.map((gradedCommit: GradedCommit) => {
-    const originalCommit = commits.find(c => c.commit == gradedCommit.commit);
+    const originalCommit = commits.find((c) => c.commit == gradedCommit.commit);
     const display = new GradedCommitDisplay(originalCommit, gradedCommit);
     return display.getHTML();
   });
