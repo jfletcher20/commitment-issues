@@ -30,7 +30,9 @@ app.get("/test", async (req, res) => {
     const gradedCommits = JSON.parse(response);
     const originalCommits: Commit[] = JSON.parse(DefaultData.testCommits);
     const htmlResponses = gradedCommits.map((gradedCommit: GradedCommit) => {
-      const originalCommit = originalCommits.find(c => c.commit == gradedCommit.commit);
+      const originalCommit = originalCommits.find(
+        (c) => c.commitHash == gradedCommit.commitHash
+      );
       const display = new GradedCommitDisplay(originalCommit, gradedCommit);
       return display.getHTML();
     });

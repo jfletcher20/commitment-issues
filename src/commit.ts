@@ -1,6 +1,6 @@
 class Commit {
   constructor(
-    public commit: string,
+    public commitHash: string,
     public header: string,
     public body: string,
     public url: string,
@@ -9,7 +9,7 @@ class Commit {
     public repoHasOpenTasks: boolean,
     public referencedTasks: string[] = []
   ) {
-    this.commit = commit;
+    this.commitHash = commitHash;
     this.header = header;
     this.body = body;
     this.url = url;

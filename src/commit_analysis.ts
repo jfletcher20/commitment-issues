@@ -16,7 +16,10 @@ export async function analyzeCommitsFromRepo(
   const gradedCommits: GradedCommit[] = JSON.parse(response);
 
   const htmlResponses = gradedCommits.map((gradedCommit: GradedCommit) => {
-    const originalCommit = commits.find((c) => c.commit == gradedCommit.commit);
+    const originalCommit = commits.find(
+      (c) => c.commitHash == gradedCommit.commitHash
+    );
+
     const display = new GradedCommitDisplay(originalCommit, gradedCommit);
     return display.getHTML();
   });
