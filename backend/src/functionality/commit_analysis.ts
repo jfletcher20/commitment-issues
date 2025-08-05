@@ -1,8 +1,8 @@
 import { fetchCommitMessages } from "./github_api";
-import { GenerativeAI } from "./interface_generative_ai";
-import { GradedCommit } from "./graded_commit";
-import { GradedCommitDisplay } from "./graded_commit_display";
-import { Commit } from "./commit";
+import { GenerativeAI } from "../ai/interface_generative_ai";
+import { GradedCommit } from "../models/graded_commit";
+import { GradedCommitDisplay } from "../presentation/graded_commit_display";
+import { Commit } from "../models/commit";
 
 export async function analyzeCommitsFromRepo(
   repoUrl: string,
