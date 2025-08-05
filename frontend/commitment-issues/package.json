@@ -1,5 +1,6 @@
 {
   "name": "commitment-issues",
+  "publisher": "foi",
   "displayName": "Commitment Issues",
   "description": "Analyze commit messages in a repository and receive feedback.",
   "version": "0.0.1",
@@ -17,10 +18,19 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "commitment-issues.openConfig",
+        "title": "Open Commitment Issues Config",
+        "category": "Commitment Issues",
+        "icon": "./src/images/icon.png"
+      }
+    ],
     "viewsWelcome": [
       {
-        "view": "ci-welcome",
-        "contents": "Welcome to Commitment Issues! This extension helps you analyze your commit messages and provides feedback based on best practices identified in our paper from analyzing different perspectives."
+        "view": "workbench.explorer.emptyView",
+        "contents": "You can analyze your commit messages via the Commitment Issues extension using Google's Gemini, but you need to configure the extension first.\n[Configure extension](command:commitment-issues.openConfig)",
+        "when": "workbenchState == empty || config.CommitmentIssues.githubAccessToken == '' || config.CommitmentIssues.githubAccessToken =~ /<.*>/ || config.CommitmentIssues.geminiApiKey == '' || config.CommitmentIssues.geminiApiKey =~ /<.*>/ || config.CommitmentIssues.repositoryUrl == '' || config.CommitmentIssues.repositoryUrl =~ /<.*>/"
       }
     ],
     "viewsContainers": {
@@ -68,31 +78,31 @@
         "CommitmentIssues.githubAccessToken": {
           "type": "string",
           "default": "<set GitHub fine-grained access token here>",
-          "markdownDescription": "GitHub fine-grained access token for accessing repositories. Go to [GitHub Developer Settings > Personal access tokens > Fine-grained access tokens](https://github.com/settings/personal-access-tokens) > Create a [new fine-grained access token](https://github.com/settings/personal-access-tokens/new) and leave the default scopes. Copy the token and paste it here. None of your data is collected or sent to any third party, this extension only uses the token to access the repository and analyze commit messages with Gemini. If you dislike GitHub's or Google's API terms of service, please refrain from using this extension.",
+          "markdownDescription": "GitHub fine-grained access token for accessing repositories.\n\nGo to [GitHub Developer Settings > Personal access tokens > Fine-grained access tokens](https://github.com/settings/personal-access-tokens) > Create a [new fine-grained access token](https://github.com/settings/personal-access-tokens/new) and leave the default scopes.\n\nCopy the token and paste it here. None of your data is collected or sent to any third party, this extension only uses the token to access the repository and analyze commit messages with Gemini. \n\n*If you disagree with GitHub's or Google's terms of service for Gemini or its API, please refrain from using this extension.*",
           "order": 0
         },
         "CommitmentIssues.geminiApiKey": {
           "type": "string",
           "default": "<set Gemini API key here>",
-          "markdownDescription": "Gemini API key for accessing the Gemini API. Go to [Google's AI studio](https://aistudio.google.com/app/apikey), create a new free API key. Copy the key and paste it here. None of your data is collected by this extension for any purposes other than making use of Gemini to analyze commit messages. If you dislike Google's API terms of service, please refrain from using this extension.",
+          "markdownDescription": "Gemini API key for accessing the Gemini API.\n\nGo to [Google's AI studio](https://aistudio.google.com/app/apikey), create a new free API key.\n\nCopy the key and paste it here. None of your data is collected by this extension for any purposes other than making use of Gemini to analyze commit messages. \n\n*If you disagree with Google's terms of service for Gemini or its API, please refrain from using this extension.*",
           "order": 1
         },
         "CommitmentIssues.repositoryUrl": {
           "type": "string",
           "default": "<set repository URL here>",
-          "markdownDescription": "The URL of the repository to analyze via Gemini. This should be the full URL of a repository the token can access or any public repository, e.g., `[https://github.com/jfletcher20/commitment-issues](https://github.com/jfletcher20/commitment-issues)`.",
+          "markdownDescription": "The URL of the repository to analyze via Gemini. \n\nThis should be the full URL of a repository the token can access or any public repository, e.g., [`https://github.com/jfletcher20/commitment-issues`](https://github.com/jfletcher20/commitment-issues).",
           "order": 2
         },
         "CommitmentIssues.branchToAnalyze": {
           "type": "string",
           "default": "",
-          "markdownDescription": "The specific branch to analyze, e.g. `main`. This should be the name of a branch in the repository. If left empty, the default branch will be used.",
+          "markdownDescription": "The specific branch to analyze, e.g. `main`. \n\nThis should be the name of a branch in the repository. If left empty, the default branch will be used.",
           "order": 3
         },
         "CommitmentIssues.userToAnalyze": {
           "type": "string",
           "default": "",
-          "markdownDescription": "The user whose commits to analyze, e.g. `nmidzic20`. If left empty, all commit messages will be analyzed regardless of who committed them.",
+          "markdownDescription": "The user whose commits to analyze, e.g. `nmidzic20`. \n\nIf left empty, all commit messages will be analyzed regardless of who committed them.",
           "order": 4
         }
       }
