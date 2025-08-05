@@ -3,8 +3,11 @@
   "displayName": "Commitment Issues",
   "description": "Analyze commit messages in a repository and receive feedback.",
   "version": "0.0.1",
+  "icon": "icon-cropped.png",
   "engines": {
-    "vscode": "^1.102.0"
+    "vscode": "^1.102.0",
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
   },
   "categories": [
     "Other"
@@ -12,12 +15,24 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "commitment-issues.helloWorld",
-        "title": "Hello World"
-      }
-    ]
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "commitmentIssuesContainer",
+          "title": "Commitment Issues",
+          "icon": "icon-cropped.png"
+        }
+      ]
+    },
+    "views": {
+      "commitmentIssuesContainer": [
+        {
+          "id": "commitmentIssuesView",
+          "name": "Commitment Issues",
+          "icon": "icon-cropped.png"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
