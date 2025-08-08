@@ -26,14 +26,14 @@
         "icon": "./src/images/icon.png"
       },
       {
-        "command": "commitment-issues.startServer",
-        "title": "Start Server",
+        "command": "commitment-issues.showWelcome",
+        "title": "Show Welcome",
         "category": "Commitment Issues",
         "icon": "./src/images/icon-cropped.png"
       },
       {
-        "command": "commitment-issues.showWelcome",
-        "title": "Show Welcome",
+        "command": "commitment-issues.analyzeCommits",
+        "title": "Analyze Commits",
         "category": "Commitment Issues",
         "icon": "./src/images/icon-cropped.png"
       }

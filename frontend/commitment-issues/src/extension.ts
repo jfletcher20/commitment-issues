@@ -13,7 +13,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	_backendServer = backend();
 
-	// register a command that calls the "/" route of the backend server and displays the response in a webview
 	context.subscriptions.push(
 		vscode.commands.registerCommand('commitment-issues.showWelcome', async () => {
 			const panel = vscode.window.createWebviewPanel(
@@ -24,6 +23,21 @@ export function activate(context: vscode.ExtensionContext) {
 			);
 
 			const response = await fetch('http://localhost:3066/');
+			const html = await response.text();
+			panel.webview.html = html;
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('commitment-issues.analyzeCommits', async () => {
+			const panel = vscode.window.createWebviewPanel(
+				'commitmentIssuesAnalyze',
+				'Analyze Commits',
+				vscode.ViewColumn.One,
+				{}
+			);
+
+			const response = await fetch('http://localhost:3066/analyze-commits');
 			const html = await response.text();
 			panel.webview.html = html;
 		})
