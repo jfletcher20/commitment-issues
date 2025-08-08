@@ -36,6 +36,12 @@
         "title": "Analyze Commits",
         "category": "Commitment Issues",
         "icon": "./src/images/icon-cropped.png"
+      },
+      {
+        "command": "commitment-issues.analyzeCommitsJson",
+        "title": "Analyze Commits (JSON)",
+        "category": "Commitment Issues",
+        "icon": "./src/images/icon-cropped.png"
       }
     ],
     "viewsWelcome": [

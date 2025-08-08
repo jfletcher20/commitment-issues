@@ -67,16 +67,23 @@ function backend(): Server {
         .json({ error: "GitHub token not set" });
     }
 
+    // check query parameters for "format"
+    const useJsonFormat: boolean = req.query.format === "json";
+
     try {
-      const html = await analyzeCommitsFromRepo(
+      const analysis = await analyzeCommitsFromRepo(
         ConfigurationManager.repo,
         ConfigurationManager.github,
         generativeAIModel,
         ConfigurationManager.branch,
         ConfigurationManager.user,
-        ConfigurationManager.amount
+        ConfigurationManager.amount,
       );
-      res.send(html);
+      if (useJsonFormat) {
+        res.json(analysis);
+      } else {
+        res.send(analysis.map((a: GradedCommitDisplay) => a.getHTML()).join("<br>"));
+      }
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

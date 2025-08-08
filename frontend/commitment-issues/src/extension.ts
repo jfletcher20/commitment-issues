@@ -42,6 +42,21 @@ export function activate(context: vscode.ExtensionContext) {
 			panel.webview.html = html;
 		})
 	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('commitment-issues.analyzeCommitsJson', async () => {
+			const panel = vscode.window.createWebviewPanel(
+				'commitmentIssuesAnalyze',
+				'Analyze Commits',
+				vscode.ViewColumn.One,
+				{}
+			);
+
+			const response = await fetch('http://localhost:3066/analyze-commits?format=json');
+			const json = await response.json();
+			panel.webview.html = JSON.stringify(json, null, 2);
+		})
+	);
 }
 
 export function deactivate() {

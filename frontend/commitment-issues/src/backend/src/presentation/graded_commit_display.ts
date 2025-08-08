@@ -8,6 +8,13 @@ class GradedCommitDisplay {
     this.gradedCommit = gradedCommit;
   }
 
+  getSerialized(): string {
+    return JSON.stringify({
+      commit: this.commit,
+      gradedCommit: this.gradedCommit,
+    });
+  }
+
   getHTML(): string {
     const gradeColor = this.getGradeColor(
       5 - this.gradedCommit.violations.length
