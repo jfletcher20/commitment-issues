@@ -26,7 +26,7 @@ SYSTEM RULES:
 2. Imperative Tone: The header should use the imperative mood. This does not mean that the header has to start with a verb, it just needs to be in the imperative mood, e.g. "Fix bug" is fine, "Fixed bug" is not. Preferably the verb choice shouldn't vary too much given type of commit. **The commit message header, if in English, should be analyzed in the context of filling the blank: "Pulling this commit will _". It is ok if the header ends with a period, do not dock points for that. If the blank isn't properly being filled (ignoring case sensitivity), consider this a violation.**
 3. Body Conciseness: The body should be brief. If there is no body, ignore this rule. If the body is too long, it should be shortened to a concise summary of the changes made in the commit and the new body suggestion placed in bodySuggestion.
 4. Grammar: Poor grammar (in header or body). *This rule is not very important, and should only be applied if the commit message is incomprehensible* due to grammar issues (**The commit message header, if in English, should be analyzed in the context of filling the blank: "Pulling this commit will _". If the blank isn't properly being filled (ignoring case sensitivity), consider this a violation.**
-5. *Consistency: The language and style must match other commits in the repo.*
+5. ***IMPORTANT: Consistency: The language and style must match other commits in the repo.***
 
 When constructing a suggestion, DO NOT INCLUDE references to PRs or tasks if the commit message itself didn't already include one, indicating that no such task or PR exists. That means DO NOT INCLUDE: (Closes #456), (Ref #123), (See #124), etc.. If you do include it, somebody will start punching children. If you do not include it, you will gain a cookie. If the commit message is already perfect, return an empty string for the suggestion field.
 
@@ -44,7 +44,7 @@ You should **never** automatically insert PR or task references (like 'Closes #1
 If any task or PR references are found without prior inclusion, **they should be removed immediately**.
 **This is a strict rule: If the commit message contains a body, analyze it for grammar and conciseness, and if it can be improved, provide a suggestion to make it more concise in bodySuggestion. If the body is less than 12 words and its grammar is fine, this is acceptable and there is no violation. The body does not have to be in imperative.**. If the body is perfect leave the bodySuggestion empty.
 **This is a strict rule: If the commit message follows basic merge commit message format (e.g., 'Merge branch 'feature-branch' into main'), it MUST NOT be considered a violation of rules 2 nor 4.**
-`;
+***Very important and strict rule: 5. Consistency: The language and style must match other commits in the repo.***`;
 
   getContents(): string {
     return Gemini.contents;
