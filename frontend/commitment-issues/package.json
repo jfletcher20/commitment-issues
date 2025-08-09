@@ -22,26 +22,37 @@
       {
         "command": "commitment-issues.openConfig",
         "title": "Open Commitment Issues Config",
+        "shortTitle": "Open Config",
         "category": "Commitment Issues",
         "icon": "./src/images/icon.png"
       },
       {
         "command": "commitment-issues.showWelcome",
-        "title": "Show Welcome",
+        "title": "Check Extension Status",
+        "shortTitle": "Status",
         "category": "Commitment Issues",
         "icon": "./src/images/icon-cropped.png"
       },
       {
         "command": "commitment-issues.analyzeCommits",
-        "title": "Analyze Commits",
+        "title": "Analyze Commit Messages (displays results as HTML)",
+        "shortTitle": "Analyze Commits (HTML)",
         "category": "Commitment Issues",
         "icon": "./src/images/icon-cropped.png"
       },
       {
         "command": "commitment-issues.analyzeCommitsJson",
-        "title": "Analyze Commits (JSON)",
+        "title": "Analyze Commit Messages (displays results as JSON)",
+        "shortTitle": "Analyze Commits (JSON)",
         "category": "Commitment Issues",
         "icon": "./src/images/icon-cropped.png"
+      },
+      {
+        "command": "commitment-issues.analyzeCommitMessages",
+        "title": "Analyze Commit Messages",
+        "shortTitle": "Analyze Commits",
+        "category": "Commitment Issues",
+        "icon": "$(sparkle)"
       }
     ],
     "viewsWelcome": [
@@ -49,43 +60,37 @@
         "view": "workbench.explorer.emptyView",
         "contents": "You can analyze your commit messages via the Commitment Issues extension using Google's Gemini, but you need to configure the extension first.\n[Configure extension](command:commitment-issues.openConfig)",
         "when": "workbenchState == empty || config.CommitmentIssues.githubAccessToken == '' || config.CommitmentIssues.githubAccessToken =~ /<.*>/ || config.CommitmentIssues.geminiApiKey == '' || config.CommitmentIssues.geminiApiKey =~ /<.*>/ || config.CommitmentIssues.repositoryUrl == '' || config.CommitmentIssues.repositoryUrl =~ /<.*>/"
+      },
+      {
+        "view": "commitment-issues-analyze-view",
+        "contents": "No analysis results loaded yet.\n\nMake sure you've configured the extension with the appropriate API keys and repository URL, then submit your commits for analysis.\n\n[Analyze Commit Messages](command:commitment-issues.analyzeCommitMessages)\n\n[Configure Extension](command:commitment-issues.openConfig)"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "ci-extension-config",
-          "title": "Commitment Issues",
-          "icon": "./src/images/icon.png"
-        },
-        {
-          "id": "ci-analyze",
-          "title": "Analyze Commits",
+          "id": "commitment-issues-analyze",
+          "title": "Analyze Commit Messages",
           "icon": "./src/images/icon-cropped.png"
         }
       ]
     },
     "views": {
-      "ci-extension-config": [
+      "commitment-issues-analyze": [
         {
-          "id": "ci-config",
-          "name": "Config",
-          "contextualTitle": "Config",
-          "icon": "./src/images/icon.png"
-        },
-        {
-          "id": "ci-settings",
-          "name": "Settings",
-          "contextualTitle": "Settings",
-          "icon": "./src/images/icon.png"
-        }
-      ],
-      "ci-analyze": [
-        {
-          "id": "ci-analyze-view",
-          "name": "Analyze Commits",
-          "contextualTitle": "Analyze Commits",
+          "id": "commitment-issues-analyze-view",
+          "name": "Analyze Commit Messages",
+          "contextualTitle": "Commit Analysis Results",
           "icon": "./src/images/icon-cropped.png"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "commitment-issues.analyzeCommitMessages",
+          "when": "view == commitment-issues-analyze-view",
+          "group": "navigation"
         }
       ]
     },
@@ -109,19 +114,19 @@
           "type": "string",
           "default": "<set repository URL here>",
           "markdownDescription": "The URL of the repository to analyze via Gemini. \n\nThis should be the full URL of a repository the token can access or any public repository, e.g., [`https://github.com/jfletcher20/commitment-issues`](https://github.com/jfletcher20/commitment-issues).",
-          "order": 2
+          "order": 4
         },
         "CommitmentIssues.branchToAnalyze": {
           "type": "string",
           "default": "",
           "markdownDescription": "The specific branch to analyze, e.g. `main`. \n\nThis should be the name of a branch in the repository. If left empty, the default branch will be used.",
-          "order": 3
+          "order": 5
         },
         "CommitmentIssues.userToAnalyze": {
           "type": "string",
           "default": "",
           "markdownDescription": "The user whose commits to analyze, e.g. `nmidzic20`. \n\nIf left empty, all commit messages will be analyzed regardless of who committed them.",
-          "order": 4
+          "order": 6
         },
         "CommitmentIssues.amountOfCommitsToAnalyze": {
           "type": "integer",
@@ -129,7 +134,7 @@
           "maximum": 24,
           "minimum": 1,
           "markdownDescription": "The number of commits to analyze, e.g. `24`. It is recommended to analyze more commits at once.",
-          "order": 5
+          "order": 7
         }
       }
     }

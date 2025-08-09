@@ -4,6 +4,8 @@ export enum ExtensionConfigurationSettings {
     root = "CommitmentIssues",
     gemini = "geminiApiKey",
     github = "githubAccessToken",
+    specialRules = "specialRules",
+    specialRulesOverrideSystemInstructions = "specialRulesOverrideSystemInstructions",
     repoUrl = "repositoryUrl",
     branch = "branchToAnalyze",
     user = "userToAnalyze",
@@ -28,6 +30,30 @@ export abstract class ConfigurationManager {
         return this.get<string>(ExtensionConfigurationSettings.gemini) || "<set Gemini API key here>";
     }
 
+    static get specialRules(): string {
+        // return this.get<string>(ExtensionConfigurationSettings.specialRules) || "";
+        /*
+        "CommitmentIssues.specialRules": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Special rules that you personally follow, or your organization follow, that will be applied during commit message analysis as part of the system instructions.",
+          "order": 2
+        },
+        */
+        return ""; // Special rules will not be implemented in this version
+    }
+    static get specialRulesOverrideSystemInstructions(): boolean {
+        // return this.get<boolean>(ExtensionConfigurationSettings.specialRulesOverrideSystemInstructions) || false;
+        /*
+        "CommitmentIssues.specialRulesOverrideSystemInstructions": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "If enabled, your special rules completely replace the system instructions used by Gemini. Otherwise, your special rules will be considered additional rules to the system instructions, with high priority.",
+          "order": 3
+        },
+        */
+        return false; // Special rules will not be implemented in this version
+    }
     static get repo(): string {
         return this.get<string>(ExtensionConfigurationSettings.repoUrl) || "<set repository URL here>";
     }

@@ -1,18 +1,14 @@
 import express from "express";
 import { Gemini } from "./ai/gemini";
 import { GenerativeAI } from "./ai/interface_generative_ai";
-import { GradedCommit } from "./models/graded_commit";
 import { GradedCommitDisplay } from "./presentation/graded_commit_display";
 import { fetchCommitMessages } from "./functionality/github_api";
 import { analyzeCommitsFromRepo } from "./functionality/commit_analysis";
-import { Commit } from "./models/commit";
-import { DefaultData } from "./ai/defaultdata";
 import { Server } from "http";
 import { ConfigurationManager } from "../../settings";
 
 const app = express();
 const port = 3066;
-const fulladdress = `http://localhost:${port}`;
 const generativeAIModel: GenerativeAI = new Gemini();
 
 function backend(): Server {
