@@ -1,7 +1,7 @@
 {
-  "name": "hr.foi.commitment_issues_demo",
+  "name": "commitement-issues-server",
   "version": "1.0.0",
-  "description": "Commitment issues demo project to test different technologies.",
+  "description": "Commitment issues server to interact with via VSCode extension frontend.",
   "main": "app.js",
   "scripts": {
     "test": "tsc && node ./dist/app.js"

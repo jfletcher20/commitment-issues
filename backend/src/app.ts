@@ -1,13 +1,13 @@
 import express from "express";
 import dotenv from "dotenv";
-import { Gemini } from "./gemini";
-import { GenerativeAI } from "./interface_generative_ai";
-import { GradedCommit } from "./graded_commit";
-import { GradedCommitDisplay } from "./graded_commit_display";
-import { fetchCommitMessages } from "./github_api";
-import { analyzeCommitsFromRepo } from "./commit_analysis";
-import { Commit } from "./commit";
-import { DefaultData } from "./defaultdata";
+import { Gemini } from "./ai/gemini";
+import { GenerativeAI } from "./ai/interface_generative_ai";
+import { GradedCommit } from "./models/graded_commit";
+import { GradedCommitDisplay } from "./presentation/graded_commit_display";
+import { fetchCommitMessages } from "./functionality/github_api";
+import { analyzeCommitsFromRepo } from "./functionality/commit_analysis";
+import { Commit } from "./models/commit";
+import { DefaultData } from "./ai/defaultdata";
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY;
@@ -30,9 +30,9 @@ app.get("/test", async (req, res) => {
     const gradedCommits = JSON.parse(response);
     const originalCommits: Commit[] = JSON.parse(DefaultData.testCommits);
     const htmlResponses = gradedCommits.map((gradedCommit: GradedCommit) => {
-      const originalCommit = originalCommits.find(
+      const originalCommit: Commit = originalCommits.find(
         (c) => c.commitHash == gradedCommit.commitHash
-      );
+      )!;
       const display = new GradedCommitDisplay(originalCommit, gradedCommit);
       return display.getHTML();
     });
