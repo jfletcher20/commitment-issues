@@ -1,3 +1,14 @@
+# Which rules constrain a good commit message?
+The following rules are the result of analyzing various takes on what constitutes a good commit message from sources we considered had a fair say in the matter.
+
+1. Header length: Must be 72 characters or less.
+2. Imperative tone: The header should use the imperative and start with a verb.
+3. Body conciseness: The body should not be unnecessarily long. Including extra details is fine, but it should be concise and to the point.
+4. Grammar: Use proper grammar (in message header and body). Commits should be comprehensible and follow basic grammar rules.
+5. Consistency: The language and style of a given commit must match that of other commits in the repo.
+
+Additionally, if possible, reference the issue or pull request your commit applies to in the commit message.
+
 # Run the project
 
 ```
