@@ -4,9 +4,9 @@ import {
   SchemaUnion,
   Type,
 } from "@google/genai";
-import { GenerativeAI } from "./interface_generative_ai";
+import { GenerativeAI } from "../ai/interface_generative_ai";
 import dotenv from "dotenv";
-import { Commit } from "./commit";
+import { Commit } from "../models/commit";
 import { DefaultData } from "./defaultdata";
 
 dotenv.config();
@@ -105,7 +105,7 @@ If any task or PR references are found without prior inclusion, **they should be
       `${this.getContents()}`
     );
     console.log(response.text);
-    return response.text;
+    return response.text ?? "<no response>";
   }
 
   async analyzeCommits(commits: Commit[]): Promise<string> {
@@ -118,7 +118,7 @@ If any task or PR references are found without prior inclusion, **they should be
       2
     )}`;
     const response: GenerateContentResponse = await this.genAiResponse(prompt);
-    return response.text;
+    return response.text ?? "<no response>";
   }
 }
 

@@ -1,6 +1,6 @@
-import { Commit } from "./commit";
-import { DefaultData } from "./defaultdata";
-import { GradedCommit } from "./graded_commit";
+import { Commit } from "../models/commit";
+import { DefaultData } from "../ai/defaultdata";
+import { GradedCommit } from "../models/graded_commit";
 
 class GradedCommitDisplay {
   constructor(public commit: Commit, public gradedCommit: GradedCommit) {

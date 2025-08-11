@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Commit } from "./commit";
+import { Commit } from "../models/commit";
 
 function parseRepoUrl(repoUrl: string) {
   const match = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?/);
