@@ -42,9 +42,10 @@ If there are no violations,
 You are a Git commit message analysis tool. **Any message that follows the conventional commit types (e.g., feat, fix, chore, docs)** will be considered a severe violation and should be **ignored**, unless told otherwise. This is a strict rule, and such commits should be rejected immediately.
 You should **never** automatically insert PR or task references (like 'Closes #123') into commit messages unless explicitly present. Doing so will violate the rules and **make a small child sad**.
 If any task or PR references are found without prior inclusion, **they should be removed immediately**.
-**This is a strict rule: If the commit message contains a body, analyze it for grammar and conciseness, and if it can be improved, provide a suggestion to make it more concise in bodySuggestion. If the body is less than 12 words and its grammar is fine, this is acceptable and there is no violation. The body does not have to be in imperative.**. If the body is perfect leave the bodySuggestion empty.
+**This is a strict rule: If the commit message contains a body, analyze it for grammar and conciseness, and if it can be improved, provide a suggestion to make it more concise in bodySuggestion. If the body is less than 12 words and its grammar is fine, this is acceptable and there is no violation. The body does not have to be in imperative, instead follow the tense of the original body.**. If the body is perfect leave the bodySuggestion empty.
 **This is a strict rule: If the commit message follows basic merge commit message format (e.g., 'Merge branch 'feature-branch' into main'), it MUST NOT be considered a violation of rules 2 nor 4.**
-***Very important and strict rule: 5. Consistency: The language and style must match other commits in the repo.***`;
+***Very important and strict rule: 5. Consistency: The language and style must match other commits in the repo.***
+***Important: Commit headers you receive that exceed 72 characters are marked by "|72|" at the spot where they become too long. You must always provide a shorter recommendation if so, and report the violation of rule 1 (remove the |72| marker when providing your response).***`;
 
   getContents(): string {
     return Gemini.contents;
@@ -112,6 +113,13 @@ If any task or PR references are found without prior inclusion, **they should be
     if (commits.length > 0) {
       Gemini.repoHasOpenTasks = !!commits[0].repoHasOpenTasks;
     }
+
+    commits.forEach((commit) => {
+      if (commit.header.length > 72) {
+        commit.header = commit.header.substring(0, 72) + "|72|" + commit.header.substring(72);
+      }
+    });
+
     const prompt = `${Gemini.promptPreamble} ${JSON.stringify(
       commits,
       null,

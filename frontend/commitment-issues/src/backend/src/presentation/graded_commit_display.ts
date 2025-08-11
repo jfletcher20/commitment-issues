@@ -7,6 +7,7 @@ class GradedCommitDisplay {
     this.commit = commit;
     this.gradedCommit = gradedCommit;
 
+    // if the suggestion and header are similar, don't consider it a violation, but a warning
     if (this.gradedCommit.suggestion && this.areStringsSimilar(this.commit.header, this.gradedCommit.suggestion)) {
       this.gradedCommit.violations = this.gradedCommit.violations.filter(v => v.rule !== 2);
       this.gradedCommit.suggestion = undefined;
@@ -15,6 +16,18 @@ class GradedCommitDisplay {
     if (this.gradedCommit.bodySuggestion && this.areStringsSimilar(this.commit.body, this.gradedCommit.bodySuggestion)) {
       this.gradedCommit.bodySuggestion = undefined;
     }
+
+    // header length greater than 72 is a strict and objective violation, a cruel rule
+    if (this.commit.header.length > 72) {
+      if (!this.gradedCommit.violations.some(v => v.rule === 1)) this.gradedCommit.violations.push({ rule: 1 });
+    }
+
+    // body suggestion drastically reduces body length, so the original body must not have been concise enough
+    if (this.gradedCommit.bodySuggestion && this.gradedCommit.bodySuggestion.length < this.commit.body.length * 0.6) {
+      if (!this.gradedCommit.violations.some(v => v.rule === 3)) this.gradedCommit.violations.push({ rule: 3 });
+    }
+
+    this.gradedCommit.violations.sort((a, b) => a.rule - b.rule);
   }
 
   private areStringsSimilar(a: string | undefined, b: string | undefined): boolean {

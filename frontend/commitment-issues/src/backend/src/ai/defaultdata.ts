@@ -1,8 +1,8 @@
 abstract class DefaultData {
     static rules: Map<number, string> = new Map([
-        [1, "Header Length: Must be 72 characters or less."],
-        [2, "Imperative Tone: The header should use the imperative and start with a verb"],
-        [3, "Body Conciseness: The body should not be unnecessarily long. Including extra details is fine, but it should be concise and to the point."],
+        [1, "Header length: Must be 72 characters or less."],
+        [2, "Imperative tone: The header should use the imperative and start with a verb."],
+        [3, "Body conciseness: The body should not be unnecessarily long. Including extra details is fine, but it should be concise and to the point."],
         [4, "Grammar: Use proper grammar (in header or body). Commits should be comprehensible and follow basic grammar rules."],
         [5, "Consistency: The language and style of a given commit must match that of other commits in the repo."],
     ]);
