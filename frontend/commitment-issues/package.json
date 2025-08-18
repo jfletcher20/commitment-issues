@@ -1,0 +1,173 @@
+{
+  "name": "commitment-issues",
+  "publisher": "foi",
+  "displayName": "Commitment Issues",
+  "description": "Analyze commit messages in a repository and receive feedback.",
+  "version": "0.0.1",
+  "icon": "./src/images/icon-cropped.png",
+  "engines": {
+    "vscode": "^1.102.0",
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "categories": [
+    "Education",
+    "AI",
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "commitment-issues.openConfig",
+        "title": "Open Commitment Issues Config",
+        "shortTitle": "Open Config",
+        "category": "Commitment Issues",
+        "icon": "./src/images/icon.png"
+      },
+      {
+        "command": "commitment-issues.showWelcome",
+        "title": "Check Extension Status",
+        "shortTitle": "Status",
+        "category": "Commitment Issues",
+        "icon": "./src/images/icon-cropped.png"
+      },
+      {
+        "command": "commitment-issues.analyzeCommits",
+        "title": "Analyze Commit Messages (displays results as HTML)",
+        "shortTitle": "Analyze Commits (HTML)",
+        "category": "Commitment Issues",
+        "icon": "./src/images/icon-cropped.png"
+      },
+      {
+        "command": "commitment-issues.analyzeCommitsJson",
+        "title": "Analyze Commit Messages (displays results as JSON)",
+        "shortTitle": "Analyze Commits (JSON)",
+        "category": "Commitment Issues",
+        "icon": "./src/images/icon-cropped.png"
+      },
+      {
+        "command": "commitment-issues.analyzeCommitMessages",
+        "title": "Analyze Commit Messages",
+        "shortTitle": "Analyze Commits",
+        "category": "Commitment Issues",
+        "icon": "$(sparkle)"
+      }
+    ],
+    "viewsWelcome": [
+      {
+        "view": "workbench.explorer.emptyView",
+        "contents": "You can analyze your commit messages via the Commitment Issues extension using Google's Gemini, but you need to configure the extension first.\n[Configure extension](command:commitment-issues.openConfig)",
+        "when": "workbenchState == empty || config.CommitmentIssues.githubAccessToken == '' || config.CommitmentIssues.githubAccessToken =~ /<.*>/ || config.CommitmentIssues.geminiApiKey == '' || config.CommitmentIssues.geminiApiKey =~ /<.*>/ || config.CommitmentIssues.repositoryUrl == '' || config.CommitmentIssues.repositoryUrl =~ /<.*>/"
+      },
+      {
+        "view": "commitment-issues-analyze-view",
+        "contents": "[WHICH RULES CONSTRAIN A GOOD COMMIT MESSAGE?](https://github.com/jfletcher20/commitment-issues/blob/main/README.md#which-rules-constrain-a-good-commit-message)\n\n1. [Header Length](https://github.com/jfletcher20/commitment-issues/blob/main/README.md#which-rules-constrain-a-good-commit-message) Must be 72 characters or less.\n2. [Imperative Tone](https://github.com/jfletcher20/commitment-issues/blob/main/README.md#which-rules-constrain-a-good-commit-message) The header should use the imperative and start with a verb.\n3. [Body Conciseness](https://github.com/jfletcher20/commitment-issues/blob/main/README.md#which-rules-constrain-a-good-commit-message) The body should not be unnecessarily long. Including extra details is fine, but the body should remain concise and to the point.\n4. [Grammar](https://github.com/jfletcher20/commitment-issues/blob/main/README.md#which-rules-constrain-a-good-commit-message) Use proper grammar (in header or body). Commits should be comprehensible and follow basic grammar rules.\n5. [Consistency](https://github.com/jfletcher20/commitment-issues/blob/main/README.md#which-rules-constrain-a-good-commit-message) The language and style of a given commit must match that of other commits in the repo.\n\n[Analyze Commit Messages](command:commitment-issues.analyzeCommitMessages)\n\n[Configure Extension](command:commitment-issues.openConfig)\nMake sure you've configured the extension with the appropriate API keys and repository URL, then submit your commits for analysis.\n\nNo analysis results loaded yet."
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "commitment-issues-analyze",
+          "title": "Analyze Commit Messages",
+          "icon": "./src/images/icon-cropped.png"
+        }
+      ]
+    },
+    "views": {
+      "commitment-issues-analyze": [
+        {
+          "id": "commitment-issues-analyze-view",
+          "name": "Analyze Commit Messages",
+          "contextualTitle": "Commit Analysis Results",
+          "icon": "./src/images/icon-cropped.png"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "commitment-issues.analyzeCommitMessages",
+          "when": "view == commitment-issues-analyze-view",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Commitment Issues",
+      "type": "object",
+      "properties": {
+        "CommitmentIssues.githubAccessToken": {
+          "type": "string",
+          "default": "<set GitHub fine-grained access token here>",
+          "markdownDescription": "GitHub fine-grained access token for accessing repositories.\n\nGo to [GitHub Developer Settings > Personal access tokens > Fine-grained access tokens](https://github.com/settings/personal-access-tokens) > Create a [new fine-grained access token](https://github.com/settings/personal-access-tokens/new) and leave the default scopes.\n\nCopy the token and paste it here. None of your data is collected or sent to any third party, this extension only uses the token to access the repository and analyze commit messages with Gemini. \n\n*If you disagree with GitHub's or Google's terms of service for Gemini or its API, please refrain from using this extension.*",
+          "order": 0
+        },
+        "CommitmentIssues.geminiApiKey": {
+          "type": "string",
+          "default": "<set Gemini API key here>",
+          "markdownDescription": "Gemini API key for accessing the Gemini API.\n\nGo to [Google's AI studio](https://aistudio.google.com/app/apikey), create a new free API key.\n\nCopy the key and paste it here. None of your data is collected by this extension for any purposes other than making use of Gemini to analyze commit messages. \n\n*If you disagree with Google's terms of service for Gemini or its API, please refrain from using this extension.*",
+          "order": 1
+        },
+        "CommitmentIssues.repositoryUrl": {
+          "type": "string",
+          "default": "<set repository URL here>",
+          "markdownDescription": "The URL of the repository to analyze via Gemini. \n\nThis should be the full URL of a repository the token can access or any public repository, e.g., [`https://github.com/jfletcher20/commitment-issues`](https://github.com/jfletcher20/commitment-issues).",
+          "order": 4
+        },
+        "CommitmentIssues.branchToAnalyze": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "The specific branch to analyze, e.g. `main`. \n\nThis should be the name of a branch in the repository. If left empty, the default branch will be used.",
+          "order": 5
+        },
+        "CommitmentIssues.userToAnalyze": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "The user whose commits to analyze, e.g. `nmidzic20`. \n\nIf left empty, all commit messages will be analyzed regardless of who committed them.",
+          "order": 6
+        },
+        "CommitmentIssues.amountOfCommitsToAnalyze": {
+          "type": "integer",
+          "default": 24,
+          "maximum": 24,
+          "minimum": 1,
+          "markdownDescription": "The number of commits to analyze, e.g. `24`. It is recommended to analyze more commits at once.",
+          "order": 7
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.7",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@google/genai": "^1.12.0",
+    "axios": "^1.11.0",
+    "express": "^5.1.0"
+  }
+}

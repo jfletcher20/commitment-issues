@@ -11,21 +11,33 @@ abstract class DefaultData {
             commit: "b15c94a604b69ed8061a590729848c4e195ee33d",
             header: "Fix Gemini test (add responseSchema)",
             body: "",
+            url: "https://github.com/jfletcher20/commitment-issues",
+            author: "imateapot",
+            branch: "main",
         },
         {
             commit: "90105ce7d1577ff6e07bd93f0d3d3cbc07c395d9",
             header: "Implement Gemini API test usage",
             body: "",
+            url: "https://github.com/jfletcher20/commitment-issues",
+            author: "imateapot",
+            branch: "main",
         },
         {
             commit: "547a02cea112ceed75448e14e0f6813409309536",
             header: "Implement base NodeJS+TS server with .env for API keys",
             body: "",
+            url: "https://github.com/jfletcher20/commitment-issues",
+            author: "imateapot",
+            branch: "main",
         },
         {
             commit: "f1526885326d6551e92fdd86ecec6d894b6fb50e",
             header: "Create README.md",
             body: "",
+            url: "https://github.com/jfletcher20/commitment-issues",
+            author: "imateapot",
+            branch: "main",
         },
 
         {
@@ -33,18 +45,27 @@ abstract class DefaultData {
             header:
                 "Prepared files for fixing icon display on Google Pixel (adding dynamic icon).",
             body: "",
+            url: "https://github.com/jfletcher20/commitment-issues",
+            author: "imateapot",
+            branch: "main",
         },
         {
             commit: "c7e2090cab3e5ff5ea3c66de86c00ce8753bcd01",
             header:
                 "Working on implementing multiple overlayed Bible ChapterIndex widgets instead of conditional loading of one or the other to overcome scroll issues, but it's causing tons of GlobalKey issues instead.",
             body: "",
+            url: "https://github.com/jfletcher20/commitment-issues",
+            author: "imateapot",
+            branch: "main",
         },
         {
             commit: "b4797d3f91c774ac3dfbe69f1bc399b83db6c6a7",
             header:
                 "Tried to implement light search pre-indexing that would skip first N indexes until firstindex of any word longer than 3 characters.",
             body: "Works but has additional lag after several characters for no discernible clear reason. Given the current way the indexing is implemented, it needs to rehash the index at the start; this should be hardcoded instead by fixing the indexer code and rerunning it.",
+            url: "https://github.com/jfletcher20/commitment-issues",
+            author: "imateapot",
+            branch: "main",
         },
     ]);
 }

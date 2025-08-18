@@ -1,4 +1,4 @@
-import { Commit } from "./commit";
+import { Commit } from "../models/commit";
 
 export interface GenerativeAI {
   test(): Promise<string>;
