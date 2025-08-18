@@ -1,4 +1,5 @@
 # Which rules constrain a good commit message?
+
 The following rules are the result of analyzing various takes on what constitutes a good commit message from sources we considered had a fair say in the matter.
 
 1. Header length: Must be 72 characters or less.
@@ -9,7 +10,11 @@ The following rules are the result of analyzing various takes on what constitute
 
 Additionally, if possible, reference the issue or pull request your commit applies to in the commit message.
 
-# Run the project
+# Run the extension
+
+Open 'commitment-issues-extension' folder in VSCode and run F5 from 'extension.ts' file to open Extension Development Host window, from which you can configure the extension with API keys and then test its commands.
+
+# Run the backend (previously)
 
 ```
 npm install
@@ -23,6 +28,7 @@ You can then access the basic web interface to make sure it's working properly a
 Commitment Issues makes use of the Gemini API via NodeJS (using TypeScript). We do not process any of your data, but Gemini does.
 
 ## Gemini API key
+
 Add a `.env` file with the `GOOGLE_API_KEY=` value.
 
 You can get your own free API key [from Google's AI studio](https://aistudio.google.com/app/apikey).

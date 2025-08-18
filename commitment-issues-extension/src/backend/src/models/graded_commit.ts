@@ -10,5 +10,8 @@ class GradedCommit {
     this.suggestion = suggestion;
     this.bodySuggestion = bodySuggestion;
   }
+  get grade(): number {
+    return Math.max(0, 5 - this.violations.length);
+  }
 }
 export { GradedCommit };
