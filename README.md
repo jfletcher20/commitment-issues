@@ -12,7 +12,7 @@ Additionally, if possible, reference the issue or pull request your commit appli
 
 # Run the extension
 
-Open 'commitment-issues-extension' folder in VSCode and run F5 from 'extension.ts' file to open Extension Development Host window, from which you can configure the extension with API keys and then test its commands.
+Open `commitment-issues-extension` folder in VSCode and run F5 from `extension.ts` file to open Extension Development Host window, from which you can configure the extension with API keys and then test its commands.
 
 # Run the backend (previously)
 
