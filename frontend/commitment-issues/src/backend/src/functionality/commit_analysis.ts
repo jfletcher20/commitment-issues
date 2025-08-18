@@ -22,7 +22,17 @@ export async function analyzeCommitsFromRepo(
 
   const response: string = await generativeAIModel.analyzeCommits(commits);
 
-  const gradedCommits: GradedCommit[] = JSON.parse(response);
+  const gradedCommitsRaw = JSON.parse(response);
+
+  const gradedCommits: GradedCommit[] = gradedCommitsRaw.map(
+    (gc: any) =>
+      new GradedCommit(
+        gc.commitHash,
+        gc.violations,
+        gc.suggestion,
+        gc.bodySuggestion
+      )
+  );
 
   const formattedResponses = gradedCommits.map((gradedCommit: GradedCommit) => {
     const originalCommit = commits.find((c) => {
