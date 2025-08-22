@@ -12,7 +12,6 @@ const port = 3066;
 const generativeAIModel: GenerativeAI = new Gemini();
 
 function backend(): Server {
-
   const server = app.listen(port, () => {
     return console.log(`Backend is running at http://localhost:${port}`);
   });
@@ -28,14 +27,14 @@ function backend(): Server {
   });
 
   app.get("/fetch-commits", async (req: any, res: any) => {
-
-    if (!ConfigurationManager.repo && ConfigurationManager.github.indexOf("<") === -1) {
+    if (
+      !ConfigurationManager.repo &&
+      ConfigurationManager.github.indexOf("<") === -1
+    ) {
       return res.status(400).json({ error: "Missing repoUrl parameter" });
     }
     if (!isValid(ConfigurationManager.github)) {
-      return res
-        .status(500)
-        .json({ error: "GitHub token not set" });
+      return res.status(500).json({ error: "GitHub token not set" });
     }
 
     try {
@@ -53,14 +52,11 @@ function backend(): Server {
   });
 
   app.get("/analyze-commits", async (req: any, res: any) => {
-
     if (!isValid(ConfigurationManager.repo)) {
       return res.status(400).json({ error: "Missing repositoryUrl parameter" });
     }
     if (!isValid(ConfigurationManager.github)) {
-      return res
-        .status(500)
-        .json({ error: "GitHub token not set" });
+      return res.status(500).json({ error: "GitHub token not set" });
     }
 
     // check query parameters for "format"
@@ -73,15 +69,67 @@ function backend(): Server {
         generativeAIModel,
         ConfigurationManager.branch,
         ConfigurationManager.user,
-        ConfigurationManager.amount,
+        ConfigurationManager.amount
       );
       if (useJsonFormat) {
         res.json(analysis);
       } else {
-        res.send(analysis.map((a: GradedCommitDisplay) => a.getHTML()).join("<br>"));
+        res.send(
+          analysis.map((a: GradedCommitDisplay) => a.getHTML()).join("<br>")
+        );
       }
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/style-comment", async (req: any, res: any) => {
+    console.log("[/style-comment] request received");
+
+    if (!isValid(ConfigurationManager.repo)) {
+      console.error(
+        "[/style-comment] invalid repo:",
+        ConfigurationManager.repo
+      );
+      return res.status(400).json({ error: "Missing repositoryUrl parameter" });
+    }
+    if (!isValid(ConfigurationManager.github)) {
+      console.error(
+        "[/style-comment] invalid github token:",
+        ConfigurationManager.github
+      );
+      return res.status(500).json({ error: "GitHub token not set" });
+    }
+
+    try {
+      console.log("[/style-comment] fetching commits with params:", {
+        repo: ConfigurationManager.repo,
+        branch: ConfigurationManager.branch,
+        user: ConfigurationManager.user,
+        amount: ConfigurationManager.amount,
+      });
+
+      const commits = await fetchCommitMessages(
+        ConfigurationManager.repo,
+        ConfigurationManager.github,
+        ConfigurationManager.branch,
+        ConfigurationManager.user,
+        ConfigurationManager.amount
+      );
+
+      console.log("[/style-comment] commits fetched:", commits.length);
+
+      const comment = await (generativeAIModel as Gemini).generateStyleComment(
+        commits,
+        ConfigurationManager.user
+      );
+
+      console.log("[/style-comment] generated comment:", comment);
+
+      res.json({ styleComment: comment });
+    } catch (error: any) {
+      console.error("[/style-comment] ERROR:", error);
+      res.status(500).json({ error: error.message || String(error) });
     }
   });
 
