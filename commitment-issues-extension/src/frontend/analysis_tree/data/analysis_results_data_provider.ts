@@ -20,6 +20,12 @@ export class AnalysisResultsProvider
 
   private analysisResults: GradedCommitDisplay[] = [];
   private styleComment: string | undefined;
+  private styleStats?: {
+    rule: number;
+    name: string;
+    count: number;
+    total: number;
+  }[];
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -29,6 +35,7 @@ export class AnalysisResultsProvider
 
   async analyze(): Promise<void> {
     try {
+      // 1) Per-commit analysis (JSON)
       const response = await fetch(
         "http://localhost:3066/analyze-commits?format=json"
       );
@@ -56,14 +63,18 @@ export class AnalysisResultsProvider
             )
         );
 
-        // short personalised style comment
+        // 2) Overall style comment + optional stats
         const sc = await fetch("http://localhost:3066/style-comment");
         if (sc.ok) {
-          const { styleComment } = await sc.json();
+          const { styleComment, stats } = await sc.json();
           this.styleComment = styleComment;
+          this.styleStats = stats;
+          console.log("[AnalysisResultsProvider] Rule stats:", stats);
         } else {
           this.styleComment = undefined;
+          this.styleStats = undefined;
         }
+
         this.refresh();
       } else {
         vscode.window.showErrorMessage(
@@ -82,43 +93,62 @@ export class AnalysisResultsProvider
   }
 
   getChildren(element?: AnalysisTreeItem): Thenable<AnalysisTreeItem[]> {
+    // ROOT LEVEL
     if (!element) {
       const rootItems: AnalysisTreeItem[] = [];
 
-      // 1) personalized style comment
+      // Overall feedback at top (expanded), rendered as wrapped lines
       if (this.styleComment && this.styleComment.trim().length > 0) {
-        rootItems.push(
-          new SuggestionTreeItem(
-            this.context.extensionUri,
-            "Overall Style Feedback",
-            this.styleComment,
-            -1 // bez ocjene; SuggestionTreeItem će ionako prikazati opis/tooltip
-          )
-        );
+        rootItems.push(new OverallFeedbackRootItem());
       }
 
-      // 2) existing detailed commit results
-      rootItems.push(
-        ...this.analysisResults.map((result) => {
-          const getCollapsibleState = (gradedCommit: GradedCommit) => {
-            if (gradedCommit.grade < 5)
-              return vscode.TreeItemCollapsibleState.Expanded;
-            if (gradedCommit.bodySuggestion || gradedCommit.suggestion)
-              return vscode.TreeItemCollapsibleState.Expanded;
-            return vscode.TreeItemCollapsibleState.None;
-          };
-          return new CommitTreeItem(
-            this.context.extensionUri,
-            result.commit,
-            result.gradedCommit,
-            getCollapsibleState(result.gradedCommit)
-          );
-        })
-      );
+      // Rule Stats node (optional)
+      if (this.styleStats && this.styleStats.length > 0) {
+        rootItems.push(new RuleStatsRootItem());
+      }
+
+      // Commits root (collapsed), contains all commits
+      if (this.analysisResults.length > 0) {
+        rootItems.push(new CommitsRootItem(this.analysisResults.length));
+      }
 
       return Promise.resolve(rootItems);
     }
 
+    // OVERALL FEEDBACK CHILDREN
+    if (element instanceof OverallFeedbackRootItem) {
+      const lines = wrapText(this.styleComment ?? "", 70);
+      const items = lines.map((l) => new OverallFeedbackTextItem(l));
+      return Promise.resolve(items);
+    }
+
+    // RULE STATS CHILDREN
+    if (element instanceof RuleStatsRootItem) {
+      const items = (this.styleStats ?? []).map((s) => new RuleStatItem(s));
+      return Promise.resolve(items);
+    }
+
+    // COMMITS ROOT CHILDREN
+    if (element instanceof CommitsRootItem) {
+      const commitItems = this.analysisResults.map((result) => {
+        const getCollapsibleState = (gradedCommit: GradedCommit) => {
+          if (gradedCommit.grade < 5)
+            return vscode.TreeItemCollapsibleState.Expanded;
+          if (gradedCommit.bodySuggestion || gradedCommit.suggestion)
+            return vscode.TreeItemCollapsibleState.Expanded;
+          return vscode.TreeItemCollapsibleState.None;
+        };
+        return new CommitTreeItem(
+          this.context.extensionUri,
+          result.commit,
+          result.gradedCommit,
+          getCollapsibleState(result.gradedCommit)
+        );
+      });
+      return Promise.resolve(commitItems);
+    }
+
+    // EXISTING COMMIT SUBTREE
     if (element instanceof CommitTreeItem) {
       const items: AnalysisTreeItem[] = [];
       const grade = element.gradedCommit.grade;
@@ -187,4 +217,73 @@ export class AnalysisResultsProvider
   public static truncateHeader(header: string): string {
     return header.length > 50 ? header.substring(0, 47) + "..." : header;
   }
+}
+
+type RuleStat = { rule: number; name: string; count: number; total: number };
+
+class OverallFeedbackRootItem extends AnalysisTreeItem {
+  constructor() {
+    super("Overall Style Feedback", vscode.TreeItemCollapsibleState.Expanded);
+    this.iconPath = new vscode.ThemeIcon("lightbulb");
+    this.tooltip = "General feedback on commit-message style";
+  }
+  contextValue = "overall-style-root";
+}
+
+class OverallFeedbackTextItem extends AnalysisTreeItem {
+  constructor(public readonly line: string) {
+    super(line, vscode.TreeItemCollapsibleState.None);
+    this.iconPath = new vscode.ThemeIcon("comment");
+    this.tooltip = line;
+  }
+  contextValue = "overall-style-line";
+}
+
+class RuleStatsRootItem extends AnalysisTreeItem {
+  constructor() {
+    super("Rule Stats", vscode.TreeItemCollapsibleState.Expanded);
+    this.iconPath = new vscode.ThemeIcon("graph");
+    this.tooltip = "Summary of violations per rule (count/total)";
+  }
+  contextValue = "rule-stats-root";
+}
+
+class RuleStatItem extends AnalysisTreeItem {
+  constructor(public readonly stat: RuleStat) {
+    super(
+      `Rule ${stat.rule}: ${stat.name}`,
+      vscode.TreeItemCollapsibleState.None
+    );
+    this.description = `${stat.count}/${stat.total}`;
+    this.tooltip = `Violations for "${stat.name}": ${stat.count} of ${stat.total} commits`;
+    this.iconPath = new vscode.ThemeIcon("warning");
+  }
+  contextValue = "rule-stat";
+}
+
+class CommitsRootItem extends AnalysisTreeItem {
+  constructor(count: number) {
+    super(
+      `Detailed View by Commit (${count})`,
+      vscode.TreeItemCollapsibleState.Collapsed
+    );
+    this.iconPath = new vscode.ThemeIcon("list-tree");
+  }
+  contextValue = "commits-root";
+}
+
+function wrapText(text: string, width = 70): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = "";
+  for (const w of words) {
+    if ((line + " " + w).trim().length > width) {
+      if (line) lines.push(line);
+      line = w;
+    } else {
+      line = (line ? line + " " : "") + w;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
 }

@@ -10,6 +10,8 @@ import { Commit } from "../models/commit";
 import { DefaultData } from "./defaultdata";
 import { ConfigurationManager } from "../../../settings";
 
+type RuleStat = { rule: number; name: string; count: number; total: number };
+
 export class Gemini implements GenerativeAI {
   static promptPreamble: string =
     "Critically examine the following commit messages, do not be afraid of offending anyone, only using your system rules. If a rule is violated, report it in the violations, and in the suggestion give a better commit message:";
@@ -133,36 +135,35 @@ If any task or PR references are found without prior inclusion, **they should be
     return response.text ?? "<no response>";
   }
 
-  async generateStyleComment(
-    commits: Commit[],
+  async generateStyleFeedbackFromStats(
+    stats: RuleStat[],
     author?: string
   ): Promise<string> {
     const ai = new GoogleGenAI({ apiKey: ConfigurationManager.gemini });
 
-    // keep the sample short so it’s cheap/stable
-    const sample = commits.slice(0, 50).map((c) => ({
-      header: c.header,
-      body: c.body?.slice(0, 160) ?? "",
-    }));
+    const lines = stats.length
+      ? stats
+          .map((s) => `- ${s.name} (rule ${s.rule}): ${s.count}/${s.total}`)
+          .join("\n")
+      : "- No violations recorded.";
 
-    const stylePrompt = `You are an expert mentor for software engineering students.
-Given the following commit messages (headers + short bodies), write a short, personalized
-overall comment on the author's general commit-message writing style (NOT specific to any single commit).
-Keep it brief (3–5 sentences). Mention 1–2 strengths, 1–2 weaknesses, and finish with 3 concrete tips.
-Do NOT output JSON; return plain text only.${
+    const prompt = `You are a mentor for software engineering students.
+Given ONLY the violation statistics below (pairs "Rule violated": "count/total"), write a short overall comment
+on the author's general commit-message writing style (NOT tied to a single commit).
+If a rule has few/zero violations, emphasize it as a strength; where counts are higher, give 1–2 concrete tips.
+Keep it concise: 3–5 sentences. Do NOT output JSON; return plain text only.${
       author ? ` Address the author by name: ${author}.` : ""
     }
 
-COMMITS:
-${JSON.stringify(sample, null, 2)}`;
+VIOLATION STATS:
+${lines}`;
 
     const resp: GenerateContentResponse = await ai.models.generateContent({
       model: GeminiModels.flash2_5,
-      contents: stylePrompt,
-      // IMPORTANT: no responseSchema here; ask for plain text
+      contents: prompt,
       config: {
         responseMimeType: "text/plain",
-        systemInstruction: "", // keep it neutral for this secondary call
+        systemInstruction: "",
       },
     });
 
