@@ -27,7 +27,41 @@ export class AnalysisResultsProvider
     total: number;
   }[];
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext) {
+    // show full comment in a wrapped HTML webview
+    context.subscriptions.push(
+      vscode.commands.registerCommand(
+        "commitment-issues.showOverallFeedbackFull",
+        () => {
+          const text = this.styleComment ?? "(no feedback)";
+          const panel = vscode.window.createWebviewPanel(
+            "commitmentIssuesOverall",
+            "Overall Style Feedback",
+            vscode.ViewColumn.Two,
+            { enableScripts: false }
+          );
+          panel.webview.html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body{ background:#1e1e1e; color:#ddd; font-family: -apple-system,Segoe UI,Ubuntu,Roboto,Helvetica,Arial,sans-serif; padding:16px; }
+      h1{ color:#ffd166; font-size:18px; margin:0 0 12px 0; }
+      .box{
+        background:#2a2a2a; border-left:5px solid #ffd166; border-radius:8px;
+        padding:12px 14px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Overall Style Feedback</h1>
+    <div class="box">${escapeHtml(text)}</div>
+  </body>
+</html>`;
+        }
+      )
+    );
+  }
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
@@ -35,7 +69,7 @@ export class AnalysisResultsProvider
 
   async analyze(): Promise<void> {
     try {
-      // 1) Per-commit analysis (JSON)
+      // first, detailed analysis (per commit)
       const response = await fetch(
         "http://localhost:3066/analyze-commits?format=json"
       );
@@ -63,7 +97,7 @@ export class AnalysisResultsProvider
             )
         );
 
-        // 2) Overall style comment + optional stats
+        // second, overall style comment
         const sc = await fetch("http://localhost:3066/style-comment");
         if (sc.ok) {
           const { styleComment, stats } = await sc.json();
@@ -97,17 +131,17 @@ export class AnalysisResultsProvider
     if (!element) {
       const rootItems: AnalysisTreeItem[] = [];
 
-      // Overall feedback at top (expanded), rendered as wrapped lines
+      // overall feedback at top (expanded)
       if (this.styleComment && this.styleComment.trim().length > 0) {
         rootItems.push(new OverallFeedbackRootItem());
       }
 
-      // Rule Stats node (optional)
+      // rule stats node (optional)
       if (this.styleStats && this.styleStats.length > 0) {
         rootItems.push(new RuleStatsRootItem());
       }
 
-      // Commits root (collapsed), contains all commits
+      // commits root (collapsed), contains all commits
       if (this.analysisResults.length > 0) {
         rootItems.push(new CommitsRootItem(this.analysisResults.length));
       }
@@ -115,11 +149,14 @@ export class AnalysisResultsProvider
       return Promise.resolve(rootItems);
     }
 
-    // OVERALL FEEDBACK CHILDREN
+    // OVERALL FEEDBACK CHILD: single row with preview, click opens full wrapped view
     if (element instanceof OverallFeedbackRootItem) {
-      const lines = wrapText(this.styleComment ?? "", 70);
-      const items = lines.map((l) => new OverallFeedbackTextItem(l));
-      return Promise.resolve(items);
+      const preview =
+        (this.styleComment ?? "").length > 180
+          ? (this.styleComment ?? "").slice(0, 180) +
+            " … (click to view full text)"
+          : this.styleComment ?? "";
+      return Promise.resolve([new OverallFeedbackPreviewItem(preview)]);
     }
 
     // RULE STATS CHILDREN
@@ -224,25 +261,38 @@ type RuleStat = { rule: number; name: string; count: number; total: number };
 class OverallFeedbackRootItem extends AnalysisTreeItem {
   constructor() {
     super("Overall Style Feedback", vscode.TreeItemCollapsibleState.Expanded);
-    this.iconPath = new vscode.ThemeIcon("lightbulb");
+    this.iconPath = new vscode.ThemeIcon(
+      "lightbulb",
+      new vscode.ThemeColor("charts.yellow")
+    );
     this.tooltip = "General feedback on commit-message style";
   }
   contextValue = "overall-style-root";
 }
 
-class OverallFeedbackTextItem extends AnalysisTreeItem {
-  constructor(public readonly line: string) {
-    super(line, vscode.TreeItemCollapsibleState.None);
-    this.iconPath = new vscode.ThemeIcon("comment");
-    this.tooltip = line;
+class OverallFeedbackPreviewItem extends AnalysisTreeItem {
+  constructor(public readonly preview: string) {
+    super(preview, vscode.TreeItemCollapsibleState.None);
+    this.iconPath = new vscode.ThemeIcon(
+      "quote",
+      new vscode.ThemeColor("charts.green")
+    );
+    this.tooltip = preview;
+    this.command = {
+      command: "commitment-issues.showOverallFeedbackFull",
+      title: "Open Full Overall Feedback",
+    };
   }
-  contextValue = "overall-style-line";
+  contextValue = "overall-style-preview";
 }
 
 class RuleStatsRootItem extends AnalysisTreeItem {
   constructor() {
     super("Rule Stats", vscode.TreeItemCollapsibleState.Expanded);
-    this.iconPath = new vscode.ThemeIcon("graph");
+    this.iconPath = new vscode.ThemeIcon(
+      "graph",
+      new vscode.ThemeColor("charts.blue")
+    );
     this.tooltip = "Summary of violations per rule (count/total)";
   }
   contextValue = "rule-stats-root";
@@ -252,11 +302,14 @@ class RuleStatItem extends AnalysisTreeItem {
   constructor(public readonly stat: RuleStat) {
     super(
       `Rule ${stat.rule}: ${stat.name}`,
-      vscode.TreeItemCollapsibleState.None
+      vscode.TreeItemCollapsibleState.Collapsed
     );
     this.description = `${stat.count}/${stat.total}`;
     this.tooltip = `Violations for "${stat.name}": ${stat.count} of ${stat.total} commits`;
-    this.iconPath = new vscode.ThemeIcon("warning");
+    this.iconPath = new vscode.ThemeIcon(
+      "warning",
+      new vscode.ThemeColor("charts.red")
+    );
   }
   contextValue = "rule-stat";
 }
@@ -267,23 +320,24 @@ class CommitsRootItem extends AnalysisTreeItem {
       `Detailed View by Commit (${count})`,
       vscode.TreeItemCollapsibleState.Collapsed
     );
-    this.iconPath = new vscode.ThemeIcon("list-tree");
+    this.iconPath = new vscode.ThemeIcon(
+      "list-tree",
+      new vscode.ThemeColor("charts.foreground")
+    );
   }
   contextValue = "commits-root";
 }
 
-function wrapText(text: string, width = 70): string[] {
-  const words = text.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let line = "";
-  for (const w of words) {
-    if ((line + " " + w).trim().length > width) {
-      if (line) lines.push(line);
-      line = w;
-    } else {
-      line = (line ? line + " " : "") + w;
-    }
-  }
-  if (line) lines.push(line);
-  return lines;
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (m) =>
+    m === "&"
+      ? "&amp;"
+      : m === "<"
+      ? "&lt;"
+      : m === ">"
+      ? "&gt;"
+      : m === '"'
+      ? "&quot;"
+      : "&#39;"
+  );
 }
