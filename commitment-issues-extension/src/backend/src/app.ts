@@ -106,8 +106,7 @@ function backend(): Server {
       }
 
       console.log("[/style-comment] Building violation stats...");
-      const { stats, avg, anyBelow3, total } =
-        buildViolationStats(lastAnalysis);
+      const { stats, avg, anyBelow3, total } = buildViolationStats(lastAnalysis);
 
       console.log(
         "[/style-comment] Stats built:",
@@ -125,6 +124,7 @@ function backend(): Server {
         return res.json({
           styleComment:
             "The commit messages analyzed are exceptionally good. We have found no notable commitment issues.",
+          avg: avg,
           stats,
         });
       }
@@ -136,7 +136,7 @@ function backend(): Server {
 
       console.log("[/style-comment] Gemini response:", comment);
 
-      return res.json({ styleComment: comment, stats });
+      return res.json({ styleComment: comment, avg: avg, stats });
     } catch (error: any) {
       console.error("[/style-comment] ERROR:", error);
       return res.status(500).json({ error: error.message || String(error) });

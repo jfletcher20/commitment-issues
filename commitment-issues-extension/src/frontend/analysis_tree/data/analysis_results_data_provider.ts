@@ -4,13 +4,13 @@ import { GradedCommit } from "../../../backend/src/models/graded_commit";
 import { GradedCommitDisplay } from "../../../backend/src/presentation/graded_commit_display";
 import { DefaultData } from "../../../backend/src/ai/defaultdata";
 import { AnalysisTreeItem } from "../presentation/analysis_tree_item";
-import { CommitTreeItem } from "../presentation/commit_tree_item";
-import { SuggestionTreeItem } from "../presentation/suggestion_tree_item";
-import { ViolationTreeItem } from "../presentation/violation_tree_item";
+import { CommitsRootItem, CommitTreeItem } from "../presentation/detailed_analysis_view/commit_tree_item";
+import { SuggestionTreeItem } from "../presentation/detailed_analysis_view/suggestion_tree_item";
+import { ViolationTreeItem } from "../presentation/detailed_analysis_view/violation_tree_item";
+import { RuleStatItem, RuleStatsRootItem } from "../presentation/simple_analysis_view/rule_stat_item";
+import { OverallFeedbackPreviewItem, OverallFeedbackRootItem } from "../presentation/simple_analysis_view/overall_feedback_item";
 
-export class AnalysisResultsProvider
-  implements vscode.TreeDataProvider<AnalysisTreeItem>
-{
+export class AnalysisResultsProvider implements vscode.TreeDataProvider<AnalysisTreeItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<
     AnalysisTreeItem | undefined | void
   > = new vscode.EventEmitter<AnalysisTreeItem | undefined | void>();
@@ -20,6 +20,7 @@ export class AnalysisResultsProvider
 
   private analysisResults: GradedCommitDisplay[] = [];
   private styleComment: string | undefined;
+  private styleAvg: number | undefined;
   private styleStats?: {
     rule: number;
     name: string;
@@ -100,12 +101,14 @@ export class AnalysisResultsProvider
         // second, overall style comment
         const sc = await fetch("http://localhost:3066/style-comment");
         if (sc.ok) {
-          const { styleComment, stats } = await sc.json();
+          const { styleComment, avg, stats } = await sc.json();
           this.styleComment = styleComment;
+          this.styleAvg = avg;
           this.styleStats = stats;
           console.log("[AnalysisResultsProvider] Rule stats:", stats);
         } else {
           this.styleComment = undefined;
+          this.styleAvg = undefined;
           this.styleStats = undefined;
         }
 
@@ -138,7 +141,7 @@ export class AnalysisResultsProvider
 
       // rule stats node (optional)
       if (this.styleStats && this.styleStats.length > 0) {
-        rootItems.push(new RuleStatsRootItem());
+        rootItems.push(new RuleStatsRootItem(this.styleAvg));
       }
 
       // commits root (collapsed), contains all commits
@@ -151,12 +154,7 @@ export class AnalysisResultsProvider
 
     // OVERALL FEEDBACK CHILD: single row with preview, click opens full wrapped view
     if (element instanceof OverallFeedbackRootItem) {
-      const preview =
-        (this.styleComment ?? "").length > 180
-          ? (this.styleComment ?? "").slice(0, 180) +
-            " … (click to view full text)"
-          : this.styleComment ?? "";
-      return Promise.resolve([new OverallFeedbackPreviewItem(preview)]);
+      return Promise.resolve([new OverallFeedbackPreviewItem(this.styleComment)]);
     }
 
     // RULE STATS CHILDREN
@@ -254,78 +252,6 @@ export class AnalysisResultsProvider
   public static truncateHeader(header: string): string {
     return header.length > 50 ? header.substring(0, 47) + "..." : header;
   }
-}
-
-type RuleStat = { rule: number; name: string; count: number; total: number };
-
-class OverallFeedbackRootItem extends AnalysisTreeItem {
-  constructor() {
-    super("Overall Style Feedback", vscode.TreeItemCollapsibleState.Expanded);
-    this.iconPath = new vscode.ThemeIcon(
-      "lightbulb",
-      new vscode.ThemeColor("charts.yellow")
-    );
-    this.tooltip = "General feedback on commit-message style";
-  }
-  contextValue = "overall-style-root";
-}
-
-class OverallFeedbackPreviewItem extends AnalysisTreeItem {
-  constructor(public readonly preview: string) {
-    super(preview, vscode.TreeItemCollapsibleState.None);
-    this.iconPath = new vscode.ThemeIcon(
-      "quote",
-      new vscode.ThemeColor("charts.green")
-    );
-    this.tooltip = preview;
-    this.command = {
-      command: "commitment-issues.showOverallFeedbackFull",
-      title: "Open Full Overall Feedback",
-    };
-  }
-  contextValue = "overall-style-preview";
-}
-
-class RuleStatsRootItem extends AnalysisTreeItem {
-  constructor() {
-    super("Rule Stats", vscode.TreeItemCollapsibleState.Collapsed);
-    this.iconPath = new vscode.ThemeIcon(
-      "graph",
-      new vscode.ThemeColor("charts.blue")
-    );
-    this.tooltip = "Summary of violations per rule (count/total)";
-  }
-  contextValue = "rule-stats-root";
-}
-
-class RuleStatItem extends AnalysisTreeItem {
-  constructor(public readonly stat: RuleStat) {
-    super(
-      `Rule ${stat.rule}: ${stat.name}`,
-      vscode.TreeItemCollapsibleState.Collapsed
-    );
-    this.description = `${stat.count}/${stat.total}`;
-    this.tooltip = `Violations for "${stat.name}": ${stat.count} of ${stat.total} commits`;
-    this.iconPath = new vscode.ThemeIcon(
-      "warning",
-      new vscode.ThemeColor("charts.red")
-    );
-  }
-  contextValue = "rule-stat";
-}
-
-class CommitsRootItem extends AnalysisTreeItem {
-  constructor(count: number) {
-    super(
-      `Detailed View by Commit (${count})`,
-      vscode.TreeItemCollapsibleState.Collapsed
-    );
-    this.iconPath = new vscode.ThemeIcon(
-      "list-tree",
-      new vscode.ThemeColor("charts.foreground")
-    );
-  }
-  contextValue = "commits-root";
 }
 
 function escapeHtml(s: string): string {

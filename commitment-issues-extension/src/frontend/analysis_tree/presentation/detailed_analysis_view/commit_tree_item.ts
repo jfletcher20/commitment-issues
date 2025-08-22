@@ -1,8 +1,22 @@
 import * as vscode from 'vscode';
-import { AnalysisTreeItem } from "./analysis_tree_item";
-import { Commit } from '../../../backend/src/models/commit';
-import { GradedCommit } from '../../../backend/src/models/graded_commit';
-import { AnalysisResultsProvider } from '../data/analysis_results_data_provider';
+import { AnalysisTreeItem } from "../analysis_tree_item";
+import { Commit } from '../../../../backend/src/models/commit';
+import { GradedCommit } from '../../../../backend/src/models/graded_commit';
+import { AnalysisResultsProvider } from '../../data/analysis_results_data_provider';
+
+export class CommitsRootItem extends AnalysisTreeItem {
+  constructor(count: number) {
+    super(
+      `Detailed View by Commit (${count})`,
+      vscode.TreeItemCollapsibleState.Collapsed
+    );
+    this.iconPath = new vscode.ThemeIcon(
+      "list-tree",
+      new vscode.ThemeColor("charts.foreground")
+    );
+  }
+  contextValue = "commits-root";
+}
 
 export class CommitTreeItem extends AnalysisTreeItem {
     constructor(

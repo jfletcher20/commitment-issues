@@ -20,6 +20,8 @@ class GradedCommitDisplay {
     // header length greater than 72 is a strict and objective violation, a cruel rule
     if (this.commit.header.length > 72) {
       if (!this.gradedCommit.violations.some(v => v.rule === 1)) this.gradedCommit.violations.push({ rule: 1 });
+    } else { // if the commit header length is not greater than 72; remove the violation
+      this.gradedCommit.violations = this.gradedCommit.violations.filter(v => v.rule !== 1);
     }
 
     // body suggestion drastically reduces body length, so the original body must not have been concise enough
