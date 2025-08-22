@@ -288,7 +288,7 @@ class OverallFeedbackPreviewItem extends AnalysisTreeItem {
 
 class RuleStatsRootItem extends AnalysisTreeItem {
   constructor() {
-    super("Rule Stats", vscode.TreeItemCollapsibleState.Expanded);
+    super("Rule Stats", vscode.TreeItemCollapsibleState.Collapsed);
     this.iconPath = new vscode.ThemeIcon(
       "graph",
       new vscode.ThemeColor("charts.blue")
