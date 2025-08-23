@@ -10,9 +10,9 @@ import { Commit } from "../models/commit";
 import { DefaultData } from "./defaultdata";
 import { ConfigurationManager } from "../../../settings";
 
+type RuleStat = { rule: number; name: string; count: number; total: number };
 
 export class Gemini implements GenerativeAI {
-
   static promptPreamble: string =
     "Critically examine the following commit messages, do not be afraid of offending anyone, only using your system rules. If a rule is violated, report it in the violations, and in the suggestion give a better commit message:";
   static contents: string = this.promptPreamble + DefaultData.testCommits;
@@ -33,7 +33,9 @@ When constructing a suggestion, DO NOT INCLUDE references to PRs or tasks if the
 You will receive an input that contains a list of commits, each with a commit hash, header, and body (if the body is not defined, ignore it). Your task is to analyze each commit message against the rules above and determine if a given commit violates any rules.
 
 Additional crucial notes for evaluation:
-*This repo ${Gemini.repoHasOpenTasks ? "has" : "does not have"} tasks or pull requests that should be referenced in commit messages.*
+*This repo ${
+    Gemini.repoHasOpenTasks ? "has" : "does not have"
+  } tasks or pull requests that should be referenced in commit messages.*
 If the commit message is already perfect, return an empty string for the suggestion field.
 If there are no violations,
 
@@ -52,12 +54,15 @@ If any task or PR references are found without prior inclusion, **they should be
   }
 
   getSpecialRules(): string {
-    return ConfigurationManager.specialRules ?
-`Special rules provided by the user, of utmost importance: ***These rules can override system rules: ${ConfigurationManager.specialRules}***` : "";
+    return ConfigurationManager.specialRules
+      ? `Special rules provided by the user, of utmost importance: ***These rules can override system rules: ${ConfigurationManager.specialRules}***`
+      : "";
   }
 
   getSystemInstructions(): string {
-    return ConfigurationManager.specialRulesOverrideSystemInstructions ? "" : Gemini.systemInstructions;
+    return ConfigurationManager.specialRulesOverrideSystemInstructions
+      ? ""
+      : Gemini.systemInstructions;
   }
 
   getResponseSchema(): SchemaUnion {
@@ -116,7 +121,8 @@ If any task or PR references are found without prior inclusion, **they should be
 
     commits.forEach((commit) => {
       if (commit.header.length > 72) {
-        commit.header = commit.header.substring(0, 72) + "|72|" + commit.header.substring(72);
+        commit.header =
+          commit.header.substring(0, 72) + "|72|" + commit.header.substring(72);
       }
     });
 
@@ -127,6 +133,41 @@ If any task or PR references are found without prior inclusion, **they should be
     )}`;
     const response: GenerateContentResponse = await this.genAiResponse(prompt);
     return response.text ?? "<no response>";
+  }
+
+  async generateStyleFeedbackFromStats(
+    stats: RuleStat[],
+    author?: string
+  ): Promise<string> {
+    const ai = new GoogleGenAI({ apiKey: ConfigurationManager.gemini });
+
+    const lines = stats.length
+      ? stats
+          .map((s) => `- ${s.name} (rule ${s.rule}): ${s.count}/${s.total}`)
+          .join("\n")
+      : "- No violations recorded.";
+
+    const prompt = `You are a mentor for software engineering students.
+Given ONLY the violation statistics below (pairs "Rule violated": "count/total"), write a short overall comment
+on the author's general commit-message writing style (NOT tied to a single commit).
+If a rule has few/zero violations, emphasize it as a strength; where counts are higher, give 1–2 concrete tips.
+Keep it concise: 3–5 sentences. Do NOT output JSON; return plain text only.${
+      author ? ` Address the author by name: ${author}.` : ""
+    }
+
+VIOLATION STATS:
+${lines}`;
+
+    const resp: GenerateContentResponse = await ai.models.generateContent({
+      model: GeminiModels.flash2_5,
+      contents: prompt,
+      config: {
+        responseMimeType: "text/plain",
+        systemInstruction: "",
+      },
+    });
+
+    return resp.text ?? "<no style comment>";
   }
 }
 
